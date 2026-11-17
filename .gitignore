@@ -1,0 +1,24 @@
+# Python & Jupyter
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Data mentah, dataset, bobot model, dan keluaran eksperimen
+data/
+datasets/
+models/weights/
+runs/
+outputs/
+
+# Artefak biner besar dan arsip
+*.pt
+*.pth
+*.onnx
+*.safetensors
+*.zip
+
+# Sistem operasi
+.DS_Store
+Thumbs.db
