@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <style>
+    .bg { fill: #F4F3EE; }
+    .ink { fill: #141413; }
+    .signal { fill: #BD3A08; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #111110; }
+      .ink { fill: #F2F1EC; }
+      .signal { fill: #FF6B35; }
+    }
+  </style>
+  <rect class="bg" width="64" height="64" rx="14" />
+  <path class="ink" d="M10 12H23V23A9 9 0 0 0 41 23V12H54V52H45V35.45A18 18 0 0 1 19 35.45V52H10Z" />
+  <circle class="signal" cx="32" cy="23" r="5.5" />
+</svg>

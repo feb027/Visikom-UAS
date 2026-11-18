@@ -1,6 +1,12 @@
 <!-- prettier-ignore -->
 <div align="center">
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/mydria-logo-dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/mydria-logo.svg" />
+  <img src="docs/assets/mydria-logo.svg" alt="Logo Mydria" width="68" height="68" />
+</picture>
+
 # Mydria
 
 **Sistem Skrining Tingkat Keparahan Retinopati Diabetik Berbasis Visi Komputer dan Deep Learning (APTOS 2019)**

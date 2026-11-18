@@ -1,5 +1,6 @@
 import type { HealthResponse, NavTabId } from "../../types/mydria";
 import { handleRovingTabKeyDown } from "../../utils/tabKeyboard";
+import { MydriaLogo } from "../common/MydriaLogo";
 import { NAV_ITEMS } from "./NavigationTabs";
 
 interface AppHeaderProps {
@@ -19,8 +20,9 @@ export function AppHeader({
   return (
     <header className="mydria-topbar sticky top-0 z-40 border-b border-[var(--border-hairline)]">
       <div className="mx-auto flex h-11 max-w-[1120px] items-center justify-between gap-4 px-4 sm:h-12 sm:px-6">
-        <span className="text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
-          Mydria
+        <span className="inline-flex items-center gap-2 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
+          <MydriaLogo className="h-[22px] w-[22px] shrink-0" />
+          <span>Mydria</span>
         </span>
 
         <nav aria-label="Utama" className="hidden sm:block">
