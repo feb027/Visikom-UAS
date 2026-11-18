@@ -1,0 +1,158 @@
+html {
+  scroll-padding-top: 68px;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.visually-hidden:where(:not(:focus-within, :active)) {
+  position: absolute !important;
+  clip-path: inset(50%) !important;
+  overflow: hidden !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+.skip-link:focus-visible {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 60;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background-color: var(--accent-button-bg);
+  color: var(--accent-button-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+:where(a:any-link, button, [role="tab"], section) {
+  scroll-margin-top: 68px;
+}
+
+:where(a:any-link, button, [role="tab"]):focus-visible {
+  outline: 2.5px solid var(--accent-link);
+  outline-offset: 2px;
+}
+
+/* Bar atas & tab bar bawah saja yang memakai backdrop-filter (DESIGN.md R-10) */
+.mydria-chrome-surface {
+  background-color: var(--bg-chrome);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Penampil optik selalu berada pada latar ruang gelap #050608 (component-specific-light-dark-theme) */
+.optical-aperture-panel {
+  color-scheme: only dark;
+  background-color: #050608;
+  color: #F5F5F7;
+  accent-color: #0A84FF;
+  border: 1px solid #2A2E3B;
+  border-radius: 18px;
+}
+
+.optical-aperture-frame {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  max-width: 384px;
+  margin-inline: auto;
+  border-radius: 50%;
+  background-color: #050608;
+  border: 1px solid #2A2E3B;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.segmented-rail {
+  background-color: var(--bg-surface-2);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.segmented-pill-active {
+  background-color: var(--pill-active-bg);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Native <dialog> bottom-sheet mobile / centered modal desktop (dialog + light-dismiss guide) */
+dialog.mydria-dialog {
+  color: var(--text-primary);
+  background-color: var(--bg-surface-1);
+  border: 1px solid var(--border-hairline);
+  padding: 0;
+  margin: auto;
+  max-width: min(92vw, 680px);
+  max-height: 90dvh;
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+@media (max-width: 639px) {
+  dialog.mydria-dialog {
+    margin: auto 0 0 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 88dvh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+  }
+}
+
+dialog.mydria-dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog.mydria-dialog::backdrop {
+  background-color: rgba(5, 6, 8, 0.56);
+  backdrop-filter: blur(4px);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mydria-bar-fill {
+    transition: width 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  dialog.mydria-dialog[open] {
+    animation: mydria-sheet-in 180ms ease-out;
+  }
+  @keyframes mydria-sheet-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mydria-bar-fill {
+    transition: width 60ms linear;
+  }
+}

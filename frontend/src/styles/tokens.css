@@ -1,0 +1,147 @@
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
+
+  /* Fallback nilai default (Clinical Daylight) untuk browser tanpa light-dark() */
+  --bg-canvas: #F2F2F7;
+  --bg-surface-1: #FFFFFF;
+  --bg-surface-2: #E5E5EA;
+  --bg-chrome: rgba(242, 242, 247, 0.86);
+  --border-hairline: #D1D1D6;
+  --text-primary: #111114;
+  --text-secondary: #52525B;
+  --accent-link: #0066CC;
+  --accent-button-bg: #0066CC;
+  --accent-button-text: #FFFFFF;
+  --pill-active-bg: #FFFFFF;
+
+  --grade-0-bg: #ECFDF3;
+  --grade-0-fg: #065F46;
+  --grade-1-bg: #EFF6FF;
+  --grade-1-fg: #1E40AF;
+  --grade-2-bg: #FFFBEB;
+  --grade-2-fg: #92400E;
+  --grade-3-bg: #FFF7ED;
+  --grade-3-fg: #9A3412;
+  --grade-4-bg: #FEF2F2;
+  --grade-4-fg: #991B1B;
+
+  --warning-bg: #FFFBEB;
+  --warning-border: #F59E0B;
+  --warning-fg: #92400E;
+  --error-bg: #FEF2F2;
+  --error-border: #EF4444;
+  --error-fg: #991B1B;
+
+  @media (prefers-color-scheme: dark) {
+    --bg-canvas: #090A0F;
+    --bg-surface-1: #16181F;
+    --bg-surface-2: #242731;
+    --bg-chrome: rgba(9, 10, 15, 0.86);
+    --border-hairline: #2A2E3B;
+    --text-primary: #F5F5F7;
+    --text-secondary: #A1A1AA;
+    --accent-link: #0A84FF;
+    --accent-button-bg: #005BB5;
+    --pill-active-bg: #323644;
+
+    --grade-0-bg: #06281E;
+    --grade-0-fg: #6EE7B7;
+    --grade-1-bg: #0F2342;
+    --grade-1-fg: #93C5FD;
+    --grade-2-bg: #2E2008;
+    --grade-2-fg: #FCD34D;
+    --grade-3-bg: #321709;
+    --grade-3-fg: #FDBA74;
+    --grade-4-bg: #311114;
+    --grade-4-fg: #FCA5A5;
+
+    --warning-bg: #2E2008;
+    --warning-border: #D97706;
+    --warning-fg: #FCD34D;
+    --error-bg: #311114;
+    --error-border: #DC2626;
+    --error-fg: #FCA5A5;
+  }
+
+  @supports (color: light-dark(white, black)) {
+    --bg-canvas: light-dark(#F2F2F7, #090A0F);
+    --bg-surface-1: light-dark(#FFFFFF, #16181F);
+    --bg-surface-2: light-dark(#E5E5EA, #242731);
+    --bg-chrome: light-dark(rgba(242, 242, 247, 0.86), rgba(9, 10, 15, 0.86));
+    --border-hairline: light-dark(#D1D1D6, #2A2E3B);
+    --text-primary: light-dark(#111114, #F5F5F7);
+    --text-secondary: light-dark(#52525B, #A1A1AA);
+    --accent-link: light-dark(#0066CC, #0A84FF);
+    --accent-button-bg: light-dark(#0066CC, #005BB5);
+    --pill-active-bg: light-dark(#FFFFFF, #323644);
+
+    --grade-0-bg: light-dark(#ECFDF3, #06281E);
+    --grade-0-fg: light-dark(#065F46, #6EE7B7);
+    --grade-1-bg: light-dark(#EFF6FF, #0F2342);
+    --grade-1-fg: light-dark(#1E40AF, #93C5FD);
+    --grade-2-bg: light-dark(#FFFBEB, #2E2008);
+    --grade-2-fg: light-dark(#92400E, #FCD34D);
+    --grade-3-bg: light-dark(#FFF7ED, #321709);
+    --grade-3-fg: light-dark(#9A3412, #FDBA74);
+    --grade-4-bg: light-dark(#FEF2F2, #311114);
+    --grade-4-fg: light-dark(#991B1B, #FCA5A5);
+
+    --warning-bg: light-dark(#FFFBEB, #2E2008);
+    --warning-border: light-dark(#D97706, #F59E0B);
+    --warning-fg: light-dark(#92400E, #FCD34D);
+    --error-bg: light-dark(#FEF2F2, #311114);
+    --error-border: light-dark(#DC2626, #EF4444);
+    --error-fg: light-dark(#991B1B, #FCA5A5);
+  }
+
+  color-scheme: light dark;
+  accent-color: var(--accent-link);
+}
+
+:root:has(> head > meta[name="color-scheme"][content="dark"]) {
+  color-scheme: dark;
+}
+
+:root:has(> head > meta[name="color-scheme"][content="light"]) {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* Branching tema tombol switch di header sesuai panduan dark-mode-toggle */
+.theme-label-to-light {
+  display: none;
+}
+
+.theme-label-to-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(:has(> head > meta[name="color-scheme"][content="light"])) .theme-label-to-dark {
+    display: none;
+  }
+  :root:not(:has(> head > meta[name="color-scheme"][content="light"])) .theme-label-to-light {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+:root:has(> head > meta[name="color-scheme"][content="dark"]) .theme-label-to-dark {
+  display: none;
+}
+
+:root:has(> head > meta[name="color-scheme"][content="dark"]) .theme-label-to-light {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
