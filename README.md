@@ -11,6 +11,9 @@
 
 **Sistem Skrining Tingkat Keparahan Retinopati Diabetik Berbasis Visi Komputer dan Deep Learning (APTOS 2019)**
 
+[![CI](https://github.com/feb027/Visikom-UAS/actions/workflows/ci.yml/badge.svg)](https://github.com/feb027/Visikom-UAS/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/feb027/Visikom-UAS?style=flat-square&color=141413)](https://github.com/feb027/Visikom-UAS/releases/tag/v1.0.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-575651?style=flat-square)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-%3E%3D3.11-3776AB?style=flat-square&logo=python&logoColor=white)](pyproject.toml)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%2B_timm-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)](src/visikom_dr/models.py)
 [![ONNX Runtime](https://img.shields.io/badge/ONNX_Runtime-1.2x-005CED?style=flat-square&logo=onnx&logoColor=white)](backend/model_service.py)
@@ -204,7 +207,11 @@ flowchart LR
 Visikom-UAS/
 |-- AGENTS.md                     # Aturan kerja, standar validasi, dan aktivasi antislop
 |-- DESIGN.md                     # Spesifikasi desain Braun Paper & Graphite + 3 dial
+|-- Dockerfile                    # Multi-stage build Node + FastAPI (siap HF Spaces & Railway)
+|-- docker-compose.yml            # Orkestrasi kontainer lokal port 8000 -> 7860
+|-- LICENSE                       # Lisensi MIT
 |-- pyproject.toml                # Definisi paket visikom-dr serta dependensi train & serve
+|-- .github/workflows/ci.yml      # Pipeline GitHub Actions (docs validator, tests, frontend)
 |-- backend/                      # Layanan REST FastAPI + pemuat artefak ONNX
 |   |-- app.py                    # Pabrik aplikasi FastAPI & mount static frontend/dist
 |   |-- config.py                 # Resolusi bobot (models/weights -> outputs/kaggle_full -> smoke)
@@ -224,7 +231,7 @@ Visikom-UAS/
 |       `-- styles/               # tokens.css & components.css
 |-- src/visikom_dr/               # Paket Visi Komputer & Deep Learning inti (train + serve)
 |-- notebooks/                    # Notebook pelatihan Kaggle/Colab (SMOKE_TEST toggle & auto-resume)
-|-- scripts/                      # kaggle_job.py, generate_training_plots.py, validate_docs.py
+|-- scripts/                      # kaggle_job.py, download_weights.py, generate_training_plots.py, validate_docs.py
 |-- tests/                        # 11 uji unit (CV, training/ONNX parity, FastAPI endpoints)
 `-- docs/                         # Dokumentasi riset, source-ledger (26 sumber), aset SS, progres
 ```
@@ -261,9 +268,15 @@ npm run build
 cd ..
 ```
 
-### 3. Pasang Bobot Model dan Sampel Uji
+### 3. Pasang Bobot Model dan Sampel Uji (Tanpa Akun Kaggle)
 
-Backend mencari bobot model secara otomatis pada `models/weights/model_best.onnx` dan `models/weights/model_meta.json`, atau jatuh ke `outputs/kaggle_full/outputs/full/` serta cadangan `outputs/kaggle_smoke/outputs/smoke/`. Untuk menarik ulang keluaran pelatihan penuh dari Kaggle:
+Unduh langsung bobot ONNX final (`106 MB`), metadata kalibrasi, tabel metrik `E1-E4`, dan tiga sampel uji APTOS 2019 dari **GitHub Release `v1.0.0`**:
+
+```powershell
+python scripts/download_weights.py
+```
+
+Alternatif bila ingin menarik langsung dari kernel Kaggle Anda sendiri:
 
 ```powershell
 python scripts/kaggle_job.py output --mode full
@@ -272,7 +285,7 @@ Copy-Item outputs\kaggle_full\outputs\full\model_meta.json models\weights\model_
 ```
 
 > [!NOTE]
-> Berkas `.onnx` dan direktori `outputs/` serta `models/weights/` dikecualikan dari Git melalui [.gitignore](.gitignore) karena ukurannya mencapai ratusan megabita.
+> Berkas `.onnx` dan direktori `outputs/` serta `models/weights/` dikecualikan dari Git melalui [.gitignore](.gitignore) karena ukurannya melebihi batas berkas normal Git (`100 MB`).
 
 ### 4. Jalankan Aplikasi Web (`Mydria`)
 
@@ -284,7 +297,17 @@ python -m backend.main
 
 Untuk pengembangan antarmuka dengan *hot-reload*, jalankan `python -m backend.main` di satu terminal dan `npm run dev` di dalam folder `frontend/` pada terminal terpisah (`http://127.0.0.1:5173`).
 
-### 5. Pelatihan di Kaggle GPU / Google Colab
+### 5. Jalankan via Docker (Lokal, Hugging Face Spaces, atau Railway)
+
+Multi-stage [Dockerfile](Dockerfile) membangun aset frontend secara otomatis dan mengunduh bobot rilis `v1.0.0` saat kontainer pertama kali menyala (memakai `PORT=7860` secara bawaan untuk Hugging Face Spaces dan dapat ditimpa lewat variabel lingkungan):
+
+```powershell
+docker compose up --build
+```
+
+Aplikasi dapat dibuka pada `http://127.0.0.1:8000` dengan penyimpanan volume persisten `mydria_models` dan `mydria_outputs`.
+
+### 6. Pelatihan di Kaggle GPU / Google Colab
 
 - **Automasi Kaggle CLI ([kaggle_job.py](scripts/kaggle_job.py)):**
   ```powershell
@@ -293,7 +316,7 @@ Untuk pengembangan antarmuka dengan *hot-reload*, jalankan `python -m backend.ma
   ```
 - **Google Colab:** Buka [notebooks/paket_b_training_colab_kaggle.ipynb](notebooks/paket_b_training_colab_kaggle.ipynb) dan ikuti panduan di [docs/03-panduan-training-colab-kaggle.md](docs/03-panduan-training-colab-kaggle.md).
 
-### 6. Uji Unit dan Validator Dokumentasi
+### 7. Uji Unit dan Validator Dokumentasi
 
 ```powershell
 $env:PYTHONPATH="src"; python -m unittest discover -s tests -v
