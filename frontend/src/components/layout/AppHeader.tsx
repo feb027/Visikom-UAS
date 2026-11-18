@@ -1,4 +1,3 @@
-import { Moon, Sun } from "lucide-react";
 import type { HealthResponse, NavTabId } from "../../types/mydria";
 import { handleRovingTabKeyDown } from "../../utils/tabKeyboard";
 import { NAV_ITEMS } from "./NavigationTabs";
@@ -6,32 +5,39 @@ import { NAV_ITEMS } from "./NavigationTabs";
 interface AppHeaderProps {
   activeTab: NavTabId;
   onSelectTab: (tab: NavTabId) => void;
+  activeScheme: "light" | "dark";
   onToggleTheme: () => void;
   health: HealthResponse | null;
 }
 
-export function AppHeader({ activeTab, onSelectTab, onToggleTheme, health }: AppHeaderProps) {
-  const stageBadge =
+export function AppHeader({
+  activeTab,
+  onSelectTab,
+  activeScheme,
+  onToggleTheme,
+  health,
+}: AppHeaderProps) {
+  const stageText =
     health?.model_stage === "full"
-      ? "Model Terlatih"
+      ? "Penuh"
       : health?.model_stage === "smoke"
-        ? "Bobot Uji Smoke"
-        : "Memuat Model";
+        ? "Uji Smoke"
+        : "Memuat";
 
   return (
-    <header className="mydria-chrome-surface sticky top-0 z-40 border-b border-[var(--border-hairline)]">
-      <div className="mx-auto flex h-12 max-w-[1200px] items-center justify-between gap-3 px-4 sm:px-6">
-        <div className="flex items-center gap-3">
-          <span className="text-[17px] font-bold tracking-tight text-[var(--text-primary)]">
+    <header className="mydria-topbar sticky top-0 z-40 border-b border-[var(--border-hairline)]">
+      <div className="mx-auto flex h-12 max-w-[1120px] items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="flex items-baseline gap-2.5">
+          <span className="text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
             Mydria
           </span>
-          <span className="tabular-nums rounded-[8px] border border-[var(--border-hairline)] bg-[var(--bg-surface-1)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
-            {stageBadge}
+          <span className="tabular-nums text-[11px] font-medium text-[var(--text-secondary)]">
+            {stageText}
           </span>
         </div>
 
         <nav aria-label="Utama" className="hidden sm:block">
-          <div role="tablist" aria-label="Menu layar" className="segmented-rail inline-flex items-center gap-1">
+          <div role="tablist" aria-label="Menu layar" className="flex items-center gap-6">
             {NAV_ITEMS.map((item, idx) => {
               const selected = activeTab === item.id;
               return (
@@ -42,13 +48,19 @@ export function AppHeader({ activeTab, onSelectTab, onToggleTheme, health }: App
                   aria-selected={selected}
                   onClick={() => onSelectTab(item.id)}
                   onKeyDown={(e) => handleRovingTabKeyDown(e, NAV_ITEMS, idx, (next) => onSelectTab(next.id))}
-                  className={`min-h-8 cursor-pointer rounded-[6px] px-3 py-1 text-xs font-semibold transition-colors ${
+                  className={`relative min-h-12 cursor-pointer px-1 text-xs font-medium transition-colors ${
                     selected
-                      ? "segmented-pill-active"
+                      ? "text-[var(--text-primary)]"
                       : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   }`}
                 >
                   {item.label}
+                  {selected ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-x-0 bottom-0 h-[2px] bg-[var(--accent-signal)]"
+                    />
+                  ) : null}
                 </button>
               );
             })}
@@ -57,17 +69,16 @@ export function AppHeader({ activeTab, onSelectTab, onToggleTheme, health }: App
 
         <button
           type="button"
+          role="switch"
+          aria-checked={activeScheme === "dark"}
+          aria-label="Alihkan mode ruang gelap"
           onClick={onToggleTheme}
-          className="inline-flex min-h-9 cursor-pointer items-center rounded-[12px] border border-[var(--border-hairline)] bg-[var(--bg-surface-1)] px-2.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)]"
+          className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border border-[var(--border-hairline)] bg-[var(--bg-recessed)] p-0.5"
         >
-          <span className="theme-label-to-dark">
-            <Moon className="h-4 w-4" aria-hidden="true" />
-            <span>Gelap</span>
-          </span>
-          <span className="theme-label-to-light">
-            <Sun className="h-4 w-4" aria-hidden="true" />
-            <span>Terang</span>
-          </span>
+          <span
+            aria-hidden="true"
+            className="braun-switch-thumb block h-4 w-4 rounded-full bg-[var(--text-primary)]"
+          />
         </button>
       </div>
     </header>

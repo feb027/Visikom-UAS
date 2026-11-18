@@ -2,13 +2,30 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
+from functools import lru_cache
+
+import cv2
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import FileResponse, Response
 
 from backend.config import DEMO_SAMPLES, DEMO_SAMPLES_DIR
 from backend.schemas import ExampleItem, ExamplesResponse
+from visikom_dr.preprocessing import preprocess_fundus
 
 router = APIRouter(prefix="/api", tags=["examples"])
+
+
+@lru_cache(maxsize=16)
+def _render_thumbnail_bytes(file_path_str: str, size: int = 160) -> bytes:
+    bgr = cv2.imread(file_path_str, cv2.IMREAD_COLOR)
+    if bgr is None or bgr.size == 0:
+        raise FileNotFoundError(file_path_str)
+    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    cropped = preprocess_fundus(rgb, mode="crop_only", size=size)
+    ok, buf = cv2.imencode(".jpg", cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_JPEG_QUALITY, 86])
+    if not ok:
+        raise RuntimeError("Gagal menyandikan thumbnail contoh.")
+    return buf.tobytes()
 
 
 @router.get("/examples", response_model=ExamplesResponse)
@@ -24,18 +41,24 @@ def list_examples() -> ExamplesResponse:
                 expected_grade=sample["expected_grade"],
                 split=sample["split"],
                 available=file_path.exists(),
-                image_url=f"/api/examples/{sample['id']}/image",
+                image_url=f"/api/examples/{sample['id']}/image?thumb=1",
             )
         )
     return ExamplesResponse(examples=items)
 
 
 @router.get("/examples/{example_id}/image")
-def get_example_image(example_id: str) -> FileResponse:
+def get_example_image(
+    example_id: str,
+    thumb: int = Query(default=0, ge=0, le=1),
+):
     match = next((s for s in DEMO_SAMPLES if s["id"] == example_id), None)
     if match is None:
         raise HTTPException(status_code=404, detail="Contoh citra tidak ditemukan.")
     file_path = DEMO_SAMPLES_DIR / match["filename"]
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Berkas citra contoh belum tersedia di server.")
+    if thumb == 1:
+        thumb_bytes = _render_thumbnail_bytes(str(file_path), size=160)
+        return Response(content=thumb_bytes, media_type="image/jpeg")
     return FileResponse(path=file_path, media_type="image/png", filename=match["filename"])

@@ -16,7 +16,7 @@ const TAB_TITLES: Record<NavTabId, string> = {
 
 export function App() {
   const [activeTab, setActiveTab] = useState<NavTabId>("screening");
-  const { toggleScheme } = useColorScheme();
+  const { activeScheme, toggleScheme } = useColorScheme();
   const screening = useScreening();
 
   useEffect(() => {
@@ -32,6 +32,7 @@ export function App() {
       <AppHeader
         activeTab={activeTab}
         onSelectTab={setActiveTab}
+        activeScheme={activeScheme}
         onToggleTheme={toggleScheme}
         health={screening.health}
       />
@@ -39,7 +40,7 @@ export function App() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="mx-auto max-w-[1200px] px-4 pt-5 pb-24 sm:px-6 sm:pb-12"
+        className="mx-auto max-w-[1120px] px-4 pt-6 pb-28 sm:px-6 sm:pt-8 sm:pb-14"
       >
         {activeTab === "screening" ? (
           <ScreeningTab

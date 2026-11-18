@@ -1,11 +1,10 @@
-import { BarChart3, BookOpen, ScanEye } from "lucide-react";
 import type { NavTabId } from "../../types/mydria";
 import { handleRovingTabKeyDown } from "../../utils/tabKeyboard";
 
 export const NAV_ITEMS: Array<{ id: NavTabId; label: string; mobileLabel: string }> = [
-  { id: "screening", label: "Pemeriksaan", mobileLabel: "Periksa" },
-  { id: "comparison", label: "Komparasi Model", mobileLabel: "Komparasi" },
-  { id: "methodology", label: "Metodologi & Batasan", mobileLabel: "Info" },
+  { id: "screening", label: "Periksa", mobileLabel: "Periksa" },
+  { id: "comparison", label: "Komparasi", mobileLabel: "Komparasi" },
+  { id: "methodology", label: "Info", mobileLabel: "Info" },
 ];
 
 interface NavigationTabsProps {
@@ -15,32 +14,44 @@ interface NavigationTabsProps {
 
 export function NavigationTabs({ activeTab, onSelectTab }: NavigationTabsProps) {
   return (
-    <nav
-      aria-label="Layar ponsel"
-      className="mydria-chrome-surface fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border-hairline)] pb-[env(safe-area-inset-bottom)] sm:hidden"
+    <div
+      className="pointer-events-none fixed inset-x-0 z-40 flex justify-center px-4 sm:hidden"
+      style={{ bottom: "calc(14px + env(safe-area-inset-bottom))" }}
     >
-      <div role="tablist" aria-label="Menu utama ponsel" className="grid h-[60px] grid-cols-3">
-        {NAV_ITEMS.map((item, idx) => {
-          const active = activeTab === item.id;
-          const Icon = item.id === "screening" ? ScanEye : item.id === "comparison" ? BarChart3 : BookOpen;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => onSelectTab(item.id)}
-              onKeyDown={(e) => handleRovingTabKeyDown(e, NAV_ITEMS, idx, (next) => onSelectTab(next.id))}
-              className={`flex min-h-[44px] cursor-pointer flex-col items-center justify-center gap-0.5 text-[12px] font-medium ${
-                active ? "text-[var(--accent-link)]" : "text-[var(--text-secondary)]"
-              }`}
-            >
-              <Icon className="h-5 w-5" aria-hidden="true" />
-              <span>{item.mobileLabel}</span>
-            </button>
-          );
-        })}
-      </div>
-    </nav>
+      <nav aria-label="Layar ponsel" className="pointer-events-auto">
+        <div
+          role="tablist"
+          aria-label="Menu utama ponsel"
+          className="mydria-capsule-dock inline-flex items-center gap-1 rounded-full px-2 py-1"
+        >
+          {NAV_ITEMS.map((item, idx) => {
+            const active = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => onSelectTab(item.id)}
+                onKeyDown={(e) => handleRovingTabKeyDown(e, NAV_ITEMS, idx, (next) => onSelectTab(next.id))}
+                className={`inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-xs transition-colors ${
+                  active
+                    ? "bg-[var(--bg-recessed)] font-semibold text-[var(--text-primary)]"
+                    : "font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                <span>{item.mobileLabel}</span>
+                {active ? (
+                  <span
+                    aria-hidden="true"
+                    className="h-1.5 w-1.5 rounded-full bg-[var(--accent-signal)]"
+                  />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
   );
 }

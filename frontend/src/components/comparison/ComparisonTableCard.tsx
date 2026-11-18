@@ -6,19 +6,32 @@ interface ColumnDef {
 }
 
 interface ComparisonTableCardProps {
+  indexTag: string;
   title: string;
   caption: string;
   rows: Array<Record<string, string | number>>;
   columns: ColumnDef[];
 }
 
-export function ComparisonTableCard({ title, caption, rows, columns }: ComparisonTableCardProps) {
+export function ComparisonTableCard({
+  indexTag,
+  title,
+  caption,
+  rows,
+  columns,
+}: ComparisonTableCardProps) {
   return (
-    <section className="rounded-[18px] border border-[var(--border-hairline)] bg-[var(--bg-surface-1)] p-4 sm:p-5">
-      <h2 className="m-0 text-base font-semibold text-[var(--text-primary)]">{title}</h2>
+    <div className="border-t border-[var(--border-hairline)] pt-5">
+      <div className="flex items-baseline gap-3">
+        <span className="tabular-nums text-xs font-semibold text-[var(--accent-signal)]">
+          {indexTag}
+        </span>
+        <h2 className="m-0 text-base font-semibold text-[var(--text-primary)]">{title}</h2>
+      </div>
+
       {rows.length === 0 ? (
         <p className="m-0 mt-2 text-sm text-[var(--text-secondary)]">
-          Berkas metrik untuk tahap ini belum tersedia di direktori keluaran.
+          Berkas metrik tahap ini belum tersedia di direktori keluaran.
         </p>
       ) : (
         <div className="mt-3 overflow-x-auto">
@@ -30,7 +43,7 @@ export function ComparisonTableCard({ title, caption, rows, columns }: Compariso
                   <th
                     key={col.key}
                     scope="col"
-                    className={`py-2 pr-4 font-semibold ${col.numeric ? "text-right" : "text-left"}`}
+                    className={`py-2 pr-4 font-medium ${col.numeric ? "text-right" : "text-left"}`}
                   >
                     {col.label}
                   </th>
@@ -49,8 +62,7 @@ export function ComparisonTableCard({ title, caption, rows, columns }: Compariso
                       typeof val === "number" && col.numeric
                         ? val.toFixed(col.decimals ?? 4)
                         : String(val ?? "-");
-                    const isFirst = cIdx === 0;
-                    if (isFirst) {
+                    if (cIdx === 0) {
                       return (
                         <th key={col.key} scope="row" className="py-2.5 pr-4 font-semibold text-[var(--text-primary)]">
                           {formatted}
@@ -74,6 +86,6 @@ export function ComparisonTableCard({ title, caption, rows, columns }: Compariso
           </table>
         </div>
       )}
-    </section>
+    </div>
   );
 }

@@ -38,6 +38,11 @@ class TestBackendApi(unittest.TestCase):
         self.assertEqual(len(ex_list), 3)
         self.assertTrue(all(item["available"] for item in ex_list))
 
+        thumb = self.client.get(ex_list[0]["image_url"])
+        self.assertEqual(thumb.status_code, 200)
+        self.assertEqual(thumb.headers["content-type"], "image/jpeg")
+        self.assertLess(len(thumb.content), 40000)
+
         metrics = self.client.get("/api/metrics")
         self.assertEqual(metrics.status_code, 200)
         m_json = metrics.json()
