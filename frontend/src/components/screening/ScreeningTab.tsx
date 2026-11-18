@@ -35,8 +35,8 @@ export function ScreeningTab({
     <div>
       <h1 className="visually-hidden">Pemeriksaan Citra Fundus Retina Mydria</h1>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,44%)_minmax(0,56%)] lg:gap-0">
-        <div className="border-b border-[var(--border-hairline)] pb-6 lg:border-r lg:border-b-0 lg:pr-10 lg:pb-0">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,44%)_minmax(0,56%)] lg:gap-0">
+        <div className="border-b border-[var(--border-hairline)] pb-4 lg:border-r lg:border-b-0 lg:pr-10 lg:pb-0">
           <div className="lg:sticky lg:top-16">
             <OpticalApertureViewer
               examples={examples}

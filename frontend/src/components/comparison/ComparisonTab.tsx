@@ -96,43 +96,43 @@ export function ComparisonTab({ active }: ComparisonTabProps) {
 
           <ComparisonTableCard
             indexTag="01"
-            title="Ablasi Prapemrosesan Citra"
-            caption="Perbandingan empat metode prapemrosesan pada validation QWK, Macro-F1, dan Recall kelas Mild."
+            title="Cara Menyiapkan Gambar (Prapemrosesan)"
+            caption="Perbandingan empat metode prapemrosesan pada keselarasan skor QWK, Macro-F1, dan deteksi kasus ringan."
             rows={data.e1_preprocessing}
             columns={[
-              { key: "experiment", label: "Eksperimen" },
+              { key: "experiment", label: "Uji" },
               { key: "preprocess_mode", label: "Mode" },
-              { key: "val_qwk", label: "Val QWK", numeric: true, decimals: 4 },
-              { key: "val_macro_f1", label: "Macro-F1", numeric: true, decimals: 4 },
-              { key: "mild_recall", label: "Recall Mild", numeric: true, decimals: 4 },
+              { key: "val_qwk", label: "Skor QWK", numeric: true, decimals: 4 },
+              { key: "val_macro_f1", label: "Rata-rata F1", numeric: true, decimals: 4 },
+              { key: "mild_recall", label: "Deteksi Ringan", numeric: true, decimals: 4 },
             ]}
           />
 
           <ComparisonTableCard
             indexTag="02"
-            title="Perbandingan Lintas Generasi Backbone"
-            caption="Perbandingan ResNet-50, EfficientNet-B0, dan ConvNeXt-V2-Tiny pada validation QWK dan AUROC Referable DR."
+            title="Perbandingan Arsitektur Model"
+            caption="Perbandingan ResNet-50, EfficientNet-B0, dan ConvNeXt-V2-Tiny pada skor QWK dan AUROC kasus rujukan."
             rows={data.e2_backbones}
             columns={[
-              { key: "experiment", label: "Eksperimen" },
-              { key: "backbone", label: "Backbone" },
-              { key: "val_qwk", label: "Val QWK", numeric: true, decimals: 4 },
-              { key: "val_macro_f1", label: "Macro-F1", numeric: true, decimals: 4 },
-              { key: "referable_auroc", label: "Referable AUROC", numeric: true, decimals: 4 },
+              { key: "experiment", label: "Uji" },
+              { key: "backbone", label: "Arsitektur" },
+              { key: "val_qwk", label: "Skor QWK", numeric: true, decimals: 4 },
+              { key: "val_macro_f1", label: "Rata-rata F1", numeric: true, decimals: 4 },
+              { key: "referable_auroc", label: "Ketepatan Rujukan", numeric: true, decimals: 4 },
             ]}
           />
 
           <ComparisonTableCard
             indexTag="03"
-            title="Loss Ordinal & Kalibrasi ECE"
+            title="Fungsi Loss & Kalibrasi Keyakinan"
             caption="Perbandingan Cross-Entropy polos, Cross-Entropy berbobot tunggal, CORN ordinal, dan Smooth L1."
             rows={data.e3_losses}
             columns={[
-              { key: "experiment", label: "Eksperimen" },
-              { key: "head_type", label: "Kepala Model" },
-              { key: "val_qwk", label: "Val QWK", numeric: true, decimals: 4 },
-              { key: "val_macro_f1", label: "Macro-F1", numeric: true, decimals: 4 },
-              { key: "ece", label: "ECE", numeric: true, decimals: 4 },
+              { key: "experiment", label: "Uji" },
+              { key: "head_type", label: "Metode" },
+              { key: "val_qwk", label: "Skor QWK", numeric: true, decimals: 4 },
+              { key: "val_macro_f1", label: "Rata-rata F1", numeric: true, decimals: 4 },
+              { key: "ece", label: "Galat Kalibrasi (ECE)", numeric: true, decimals: 4 },
             ]}
           />
 

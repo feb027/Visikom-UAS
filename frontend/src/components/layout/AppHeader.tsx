@@ -15,26 +15,13 @@ export function AppHeader({
   onSelectTab,
   activeScheme,
   onToggleTheme,
-  health,
 }: AppHeaderProps) {
-  const stageText =
-    health?.model_stage === "full"
-      ? "Penuh"
-      : health?.model_stage === "smoke"
-        ? "Uji Smoke"
-        : "Memuat";
-
   return (
     <header className="mydria-topbar sticky top-0 z-40 border-b border-[var(--border-hairline)]">
-      <div className="mx-auto flex h-12 max-w-[1120px] items-center justify-between gap-4 px-4 sm:px-6">
-        <div className="flex items-baseline gap-2.5">
-          <span className="text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
-            Mydria
-          </span>
-          <span className="tabular-nums text-[11px] font-medium text-[var(--text-secondary)]">
-            {stageText}
-          </span>
-        </div>
+      <div className="mx-auto flex h-11 max-w-[1120px] items-center justify-between gap-4 px-4 sm:h-12 sm:px-6">
+        <span className="text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
+          Mydria
+        </span>
 
         <nav aria-label="Utama" className="hidden sm:block">
           <div role="tablist" aria-label="Menu layar" className="flex items-center gap-6">

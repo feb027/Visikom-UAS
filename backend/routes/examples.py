@@ -5,12 +5,12 @@ from __future__ import annotations
 from functools import lru_cache
 
 import cv2
+import numpy as np
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse, Response
 
 from backend.config import DEMO_SAMPLES, DEMO_SAMPLES_DIR
 from backend.schemas import ExampleItem, ExamplesResponse
-from visikom_dr.preprocessing import preprocess_fundus
 
 router = APIRouter(prefix="/api", tags=["examples"])
 
@@ -21,8 +21,22 @@ def _render_thumbnail_bytes(file_path_str: str, size: int = 160) -> bytes:
     if bgr is None or bgr.size == 0:
         raise FileNotFoundError(file_path_str)
     rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-    cropped = preprocess_fundus(rgb, mode="crop_only", size=size)
-    ok, buf = cv2.imencode(".jpg", cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_JPEG_QUALITY, 86])
+    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+    mask = (gray > 10).astype(np.uint8) * 255
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if contours:
+        x, y, w, h = cv2.boundingRect(max(contours, key=cv2.contourArea))
+        crop = rgb[y : y + h, x : x + w]
+    else:
+        crop = rgb
+    ch, cw = crop.shape[:2]
+    # Potong persegi dari tengah retina agar thumbnail bundar bebas pita hitam atas-bawah.
+    side = max(16, min(ch, cw))
+    cy, cx = ch // 2, cw // 2
+    half = side // 2
+    square = crop[cy - half : cy - half + side, cx - half : cx - half + side]
+    thumb = cv2.resize(square, (size, size), interpolation=cv2.INTER_AREA)
+    ok, buf = cv2.imencode(".jpg", cv2.cvtColor(thumb, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_JPEG_QUALITY, 86])
     if not ok:
         raise RuntimeError("Gagal menyandikan thumbnail contoh.")
     return buf.tobytes()

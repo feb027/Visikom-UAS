@@ -1,4 +1,4 @@
-import { type ChangeEvent, type DragEvent, useId, useState } from "react";
+import { type ChangeEvent, type DragEvent, useId, useRef, useState } from "react";
 import { Maximize2, Plus, ScanEye } from "lucide-react";
 import type { DemoExample, PredictionResult, ViewerLayerKey } from "../../types/mydria";
 import { LOADING_STEPS } from "../../hooks/useScreening";
@@ -40,6 +40,7 @@ export function OpticalApertureViewer({
   const [splitPercent, setSplitPercent] = useState(50);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const sliderId = useId();
 
   const layers = prediction?.accepted ? prediction.viewer_layers : null;
@@ -47,6 +48,12 @@ export function OpticalApertureViewer({
   const processedImageUrl = layers ? layers[activeLayer] : null;
   const showSplit = Boolean(layers && activeLayer !== "original_crop");
   const activeLayerLabel = LAYER_OPTIONS.find((item) => item.key === activeLayer)?.label ?? "Pratinjau";
+
+  const openFilePicker = () => {
+    if (!isLoading) {
+      fileInputRef.current?.click();
+    }
+  };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -65,14 +72,14 @@ export function OpticalApertureViewer({
   };
 
   return (
-    <div className="space-y-5">
-      <div className="relative mx-auto w-full max-w-[288px] sm:max-w-[368px]">
+    <div className="space-y-3 sm:space-y-4">
+      <div className="relative mx-auto w-full max-w-[236px] sm:max-w-[360px]">
         {layers ? (
           <button
             type="button"
             onClick={() => setZoomOpen(true)}
             aria-label="Perbesar citra fundus retina"
-            className="absolute top-0 right-0 z-10 inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-recessed)] hover:text-[var(--text-primary)]"
+            className="absolute -top-1 -right-2 z-10 inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-recessed)] hover:text-[var(--text-primary)]"
           >
             <Maximize2 className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -91,10 +98,10 @@ export function OpticalApertureViewer({
         >
           <div className="relative h-full w-full overflow-hidden rounded-full bg-[#07080A]">
             {isLoading ? (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-6 text-center">
+              <div className="flex h-full w-full flex-col items-center justify-center gap-2.5 p-5 text-center">
                 <progress
                   aria-label="Memproses analisis citra fundus"
-                  className="h-1.5 w-36 overflow-hidden rounded-full accent-[#FF6B35]"
+                  className="h-1.5 w-32 overflow-hidden rounded-full accent-[#FF6B35]"
                 />
                 <ol className="m-0 list-none space-y-1 p-0 text-left text-[11px]">
                   {LOADING_STEPS.map((step, i) => (
@@ -129,14 +136,14 @@ export function OpticalApertureViewer({
                     >
                       <span className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#07080A]/80" />
                     </div>
-                    <label htmlFor={sliderId} className="visually-hidden">
+                    <label htmlFor={sliderId} className="sr-only-static">
                       Geser garis pembanding Asli dengan {activeLayerLabel}
                     </label>
                     <input
                       id={sliderId}
                       type="range"
-                      min={0}
-                      max={100}
+                      min={4}
+                      max={96}
                       value={splitPercent}
                       aria-valuetext={`${splitPercent}% Asli, ${100 - splitPercent}% ${activeLayerLabel}`}
                       onChange={(e) => setSplitPercent(Number(e.target.value))}
@@ -152,23 +159,25 @@ export function OpticalApertureViewer({
                 className="block h-full w-full object-contain"
               />
             ) : (
-              <label
-                htmlFor="fundus-file-input"
-                className="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-2 p-6 text-center"
+              <button
+                type="button"
+                onClick={openFilePicker}
+                aria-label="Pilih atau jatuhkan berkas foto fundus"
+                className="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-2 p-5 text-center"
               >
-                <ScanEye className="h-9 w-9 text-[#FF6B35]" aria-hidden="true" />
-                <span className="max-w-[190px] text-xs font-medium text-[#F2F1EC]">
-                  Ketuk atau jatuhkan citra fundus PNG/JPG
+                <ScanEye className="h-8 w-8 text-[#FF6B35]" aria-hidden="true" />
+                <span className="max-w-[170px] text-xs font-medium text-[#F2F1EC]">
+                  Ketuk atau jatuhkan foto fundus PNG/JPG
                 </span>
-                <span className="text-[11px] text-[#A6A49B]">atau pilih sampel di bawah</span>
-              </label>
+                <span className="text-[11px] text-[#A6A49B]">atau pilih contoh di bawah</span>
+              </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Rel 4 lingkaran: 3 sampel APTOS 2019 nyata + lingkaran ke-4 unggah berkas */}
-      <div className="flex items-center justify-center gap-3.5">
+      {/* Rel 4 lingkaran proporsional: 3 contoh retina penuh + 1 tombol unggah berkas */}
+      <div className="flex items-center justify-center gap-3 sm:gap-3.5">
         {examples.map((ex) => {
           const isSelected = selectedName === ex.label;
           return (
@@ -179,7 +188,7 @@ export function OpticalApertureViewer({
               onClick={() => onSelectExample(ex)}
               aria-label={`Uji ${ex.label}`}
               aria-pressed={isSelected}
-              className={`h-14 w-14 cursor-pointer overflow-hidden rounded-full bg-[#07080A] p-1 transition-transform hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-45 ${
+              className={`h-12 w-12 shrink-0 cursor-pointer overflow-hidden rounded-full bg-[#07080A] p-0.5 transition-transform hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-45 sm:h-14 sm:w-14 ${
                 isSelected
                   ? "ring-2 ring-[var(--accent-signal)] ring-offset-2 ring-offset-[var(--bg-canvas)]"
                   : "border border-[var(--border-hairline)]"
@@ -194,27 +203,30 @@ export function OpticalApertureViewer({
           );
         })}
 
-        <label
-          htmlFor="fundus-file-input"
-          className={`flex h-14 w-14 cursor-pointer flex-col items-center justify-center rounded-full border border-dashed border-[var(--text-secondary)] bg-transparent text-[var(--text-primary)] transition-colors hover:border-[var(--accent-signal)] hover:text-[var(--accent-signal)] ${
-            isLoading ? "pointer-events-none opacity-45" : ""
-          }`}
+        <button
+          type="button"
+          onClick={openFilePicker}
+          disabled={isLoading}
+          aria-label="Unggah berkas citra fundus PNG atau JPG"
+          className="flex h-12 w-12 shrink-0 cursor-pointer flex-col items-center justify-center rounded-full border border-dashed border-[var(--text-secondary)] bg-transparent text-[var(--text-primary)] transition-colors hover:border-[var(--accent-signal)] hover:text-[var(--accent-signal)] disabled:cursor-not-allowed disabled:opacity-45 sm:h-14 sm:w-14"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
-          <span className="text-[10px] font-medium leading-none mt-0.5">Unggah</span>
-        </label>
+          <span className="mt-0.5 text-[10px] font-medium leading-none">Unggah</span>
+        </button>
+
         <input
+          ref={fileInputRef}
           id="fundus-file-input"
           type="file"
           accept="image/png,image/jpeg"
           onChange={handleFileChange}
-          className="visually-hidden"
+          className="hidden"
           disabled={isLoading}
         />
       </div>
 
       {/* Pemilih lapisan segmen bergaya garis bawah Braun */}
-      <div className="border-t border-[var(--border-hairline)] pt-2">
+      <div className="border-t border-[var(--border-hairline)] pt-1.5">
         <div
           role="tablist"
           aria-label="Lapisan visualisasi fundus"
@@ -248,11 +260,6 @@ export function OpticalApertureViewer({
             );
           })}
         </div>
-        {showSplit ? (
-          <p className="m-0 mt-1.5 text-center text-[11px] text-[var(--text-secondary)]">
-            Geser garis di atas retina untuk membandingkan Asli (kiri) dengan {activeLayerLabel} (kanan).
-          </p>
-        ) : null}
       </div>
 
       <ModalSheet
@@ -266,11 +273,11 @@ export function OpticalApertureViewer({
               <img
                 src={processedImageUrl}
                 alt={`Perbesaran fundus ${activeLayerLabel}`}
-                className="mx-auto aspect-square w-full max-w-[460px] rounded-full object-contain"
+                className="mx-auto aspect-square w-full max-w-[440px] rounded-full object-contain"
               />
             </div>
             <p className="m-0 text-xs text-[var(--text-secondary)]">
-              Resolusi inferensi 384 x 384 piksel. Peta Grad-CAM++ menggambarkan fokus relatif model, bukan anotasi segmentasi lesi.
+              Resolusi analisis 384 x 384 piksel. Warna hangat pada mode Grad-CAM++ menunjukkan area yang paling memengaruhi penilaian model.
             </p>
           </div>
         ) : null}

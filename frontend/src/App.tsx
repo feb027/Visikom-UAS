@@ -40,7 +40,7 @@ export function App() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="mx-auto max-w-[1120px] px-4 pt-6 pb-28 sm:px-6 sm:pt-8 sm:pb-14"
+        className="mx-auto max-w-[1120px] px-4 pt-3 pb-24 sm:px-6 sm:pt-8 sm:pb-14"
       >
         {activeTab === "screening" ? (
           <ScreeningTab
