@@ -131,7 +131,7 @@ export function OpticalApertureViewer({
                     />
                     <div
                       aria-hidden="true"
-                      className="pointer-events-none absolute inset-y-0 z-10 w-px bg-white/90"
+                      className="pointer-events-none absolute inset-y-0 z-10 w-px -translate-x-1/2 bg-white/90"
                       style={{ left: `${splitPercent}%` }}
                     >
                       <span className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#07080A]/80" />
@@ -142,8 +142,9 @@ export function OpticalApertureViewer({
                     <input
                       id={sliderId}
                       type="range"
-                      min={4}
-                      max={96}
+                      min={0}
+                      max={100}
+                      step={1}
                       value={splitPercent}
                       aria-valuetext={`${splitPercent}% Asli, ${100 - splitPercent}% ${activeLayerLabel}`}
                       onChange={(e) => setSplitPercent(Number(e.target.value))}

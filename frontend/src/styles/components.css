@@ -90,11 +90,13 @@ body {
 
 /* Split comparison native <input type="range"> mengikuti panduan slider (WebKit & Firefox terpisah) */
 input[type="range"].split-range-input {
+  --slider-thumb-size: 1rem;
   appearance: none;
   background: transparent;
   margin: 0;
   padding: 0;
   border: 0;
+  touch-action: pan-y;
   cursor: ew-resize;
 }
 
@@ -107,7 +109,7 @@ input[type="range"].split-range-input::-webkit-slider-runnable-track {
 input[type="range"].split-range-input::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 44px;
+  width: var(--slider-thumb-size);
   height: 100%;
   background: transparent;
   border: 0;
@@ -120,7 +122,7 @@ input[type="range"].split-range-input::-moz-range-track {
 }
 
 input[type="range"].split-range-input::-moz-range-thumb {
-  width: 44px;
+  width: var(--slider-thumb-size);
   height: 100%;
   background: transparent;
   border: 0;
