@@ -14,7 +14,7 @@ Skill ini melengkapi `antislop` (`antislop` core dan `antislop-copywriting`) den
 ## Hierarki Prinsip Wajib
 
 1. **Integritas Bukti dan Sitasi (`Zero Fabrication`):**
-   1. Setiap klaim literatur, statistik dataset, atau perbandingan performa metode wajib merujuk sumber terverifikasi di [docs/research/source-ledger.md](file:///g:/semester%207/Visikom-UAS/docs/research/source-ledger.md) menggunakan penanda `[S###]` serta entri `references/references.bib` menggunakan kunci `[@bibkey]`.
+   1. Setiap klaim literatur, statistik dataset, atau perbandingan performa metode wajib merujuk sumber terverifikasi di [docs/research/source-ledger.md](../../../docs/research/source-ledger.md) menggunakan penanda `[S###]` serta entri `references/references.bib` menggunakan kunci `[@bibkey]`.
    2. Angka hasil penelitian terdahulu tidak boleh dicampur seolah diukur pada protokol pemisahan data yang identik bila sumber aslinya memakai partisi atau metrik berbeda.
    3. Apabila eksperimen sendiri belum dijalankan atau angka belum diukur langsung dari log eksekusi, wajib menggunakan penanda eksplisit `[DATA EKSPERIMEN: menunggu eksekusi]`. Dilarang mengisi angka dari perkiraan atau ingatan.
    4. Identitas anggota kelompok yang belum diisikan oleh pengguna tidak boleh dikarang; gunakan slot eksplisit `[ANGGOTA 1]` sampai `[ANGGOTA 5]`.
