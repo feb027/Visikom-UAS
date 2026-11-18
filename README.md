@@ -121,6 +121,57 @@ Model final **`ConvNeXt-V2-Tiny` + `Ben Graham` + `SmoothL1Loss`** diekspor ke `
 
 </details>
 
+### 4. Grafik Pelatihan, Confusion Matrix, dan Galeri `Grad-CAM++`
+
+Seluruh grafik dihasilkan langsung dari berkas `history.csv`, `aptos_audit_summary.json`, dan `E4_heldout_test_metrics.json` menggunakan [scripts/generate_training_plots.py](scripts/generate_training_plots.py):
+
+<table align="center">
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/assets/plots/01-aptos-dataset-audit.png" alt="Distribusi Kelas APTOS 2019 Pasca-Audit" width="100%" />
+      <br />
+      <sub><strong>Distribusi Kelas APTOS 2019:</strong> Partisi bebas kebocoran klaster duplikat pada <code>Train-CV</code> (2.929) vs <code>Held-Out Fold 0</code> (733).</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/assets/plots/03-e2-train-val-loss-curves.png" alt="Kurva Loss Lintas Arsitektur E2" width="100%" />
+      <br />
+      <sub><strong>Kurva Loss Train vs Validasi (<code>E2</code>):</strong> Konvergensi <code>ConvNeXt-V2-Tiny</code>, <code>EfficientNet-B0</code>, dan <code>ResNet-50</code> pada masukan <code>384 x 384 px</code>.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img src="docs/assets/plots/02-training-validation-qwk-curves.png" alt="Kurva Validation QWK E1 E2 dan E3" width="100%" />
+      <br />
+      <sub><strong>Kurva Validation QWK (<code>E1-E3</code>):</strong> Ablasi prapemrosesan, komparasi 3 generasi arsitektur, dan keunggulan regresi ordinal <code>SmoothL1 + Nelder-Mead</code>.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img src="docs/assets/plots/04-e4-confusion-matrix-and-per-class.png" alt="Confusion Matrix dan Evaluasi Per Kelas E4" width="100%" />
+      <br />
+      <sub><strong>Confusion Matrix &amp; Metrik Per Kelas (<code>Fold 0</code>):</strong> <code>QWK 0,9228</code> dan <code>Referable DR AUROC 0,9864</code> tanpa kelas yang runtuh ke <code>0,00</code>.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img src="docs/assets/plots/05-gradcam-grade0-to-grade4.png" alt="Galeri Grad-CAM++ Grade 0 sampai Grade 4" width="100%" />
+      <br />
+      <sub><strong>Galeri Aktivasi Spasial <code>Grad-CAM++</code>:</strong> Peta atensi model final <code>ConvNeXt-V2-Tiny</code> pada lima contoh kelas nyata <code>Fold 0</code>.</sub>
+    </td>
+  </tr>
+</table>
+
+### 5. Kesesuaian dengan Outline Proyek Mata Kuliah
+
+| Butir Outline Awal | Realisasi pada Repositori & Peningkatan Paket B |
+| :--- | :--- |
+| Audit struktur berkas & larangan evaluasi memakai `test.csv` tanpa label | Terpenuhi penuh oleh [audit_dataset.py](src/visikom_dr/audit_dataset.py), ditambah deduplikasi `pHash`/`dHash` dan `StratifiedGroupKFold` |
+| Prapemrosesan citra retina | Terpenuhi dan ditingkatkan dari `224 px` mentah menjadi `384 x 384` `circular_roi_crop` + ablasi `Lab-CLAHE` vs `Ben Graham` |
+| Pelatihan & perbandingan `ResNet-50` dan `EfficientNet-B0` | Kedua arsitektur dilatih dan dibandingkan (`0,8730` vs `0,8740` Val QWK), disertai penantang `ConvNeXt-V2-Tiny` (`0,8914`) |
+| Penanganan ketidakseimbangan kelas | Terpenuhi lewat ablasi terkontrol `E3` (`CE polos` vs `CE single-weight` vs `CORN` vs `SmoothL1Loss + OptimizedRounder`) |
+| Confusion matrix, grafik pelatihan, & metrik per kelas + QWK | Tersedia di `outputs/kaggle_full/` dan dirender ulang otomatis ke `docs/assets/plots/` |
+| Aplikasi pratinjau, unggah foto, prediksi Grade 0-4, & batasan klinis | Diimplementasikan lewat web *mobile-first* `Mydria` (`FastAPI + ONNX Runtime + React`), dilengkapi gerbang kualitas OpenCV dan peta panas `Grad-CAM++` |
+
 ---
 
 ## Arsitektur Sistem
@@ -167,12 +218,63 @@ Visikom-UAS/
 |       `-- styles/               # tokens.css & components.css
 |-- src/visikom_dr/               # Paket Visi Komputer & Deep Learning inti (train + serve)
 |-- notebooks/                    # Notebook pelatihan Kaggle/Colab (SMOKE_TEST toggle & auto-resume)
-|-- scripts/                      # kaggle_job.py (automasi CLI Kaggle) & validate_docs.py
+|-- scripts/                      # kaggle_job.py, generate_training_plots.py, validate_docs.py
 |-- tests/                        # 11 uji unit (CV, training/ONNX parity, FastAPI endpoints)
 `-- docs/                         # Dokumentasi riset, source-ledger (26 sumber), aset SS, progres
 ```
 
 </details>
+
+### 4. Grafik Pelatihan, Confusion Matrix, dan Galeri `Grad-CAM++`
+
+Seluruh grafik dihasilkan langsung dari berkas `history.csv`, `aptos_audit_summary.json`, dan `E4_heldout_test_metrics.json` menggunakan [scripts/generate_training_plots.py](scripts/generate_training_plots.py):
+
+<table align="center">
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/assets/plots/01-aptos-dataset-audit.png" alt="Distribusi Kelas APTOS 2019 Pasca-Audit" width="100%" />
+      <br />
+      <sub><strong>Distribusi Kelas APTOS 2019:</strong> Partisi bebas kebocoran klaster duplikat pada <code>Train-CV</code> (2.929) vs <code>Held-Out Fold 0</code> (733).</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/assets/plots/03-e2-train-val-loss-curves.png" alt="Kurva Loss Lintas Arsitektur E2" width="100%" />
+      <br />
+      <sub><strong>Kurva Loss Train vs Validasi (<code>E2</code>):</strong> Konvergensi <code>ConvNeXt-V2-Tiny</code>, <code>EfficientNet-B0</code>, dan <code>ResNet-50</code> pada masukan <code>384 x 384 px</code>.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img src="docs/assets/plots/02-training-validation-qwk-curves.png" alt="Kurva Validation QWK E1 E2 dan E3" width="100%" />
+      <br />
+      <sub><strong>Kurva Validation QWK (<code>E1-E3</code>):</strong> Ablasi prapemrosesan, komparasi 3 generasi arsitektur, dan keunggulan regresi ordinal <code>SmoothL1 + Nelder-Mead</code>.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img src="docs/assets/plots/04-e4-confusion-matrix-and-per-class.png" alt="Confusion Matrix dan Evaluasi Per Kelas E4" width="100%" />
+      <br />
+      <sub><strong>Confusion Matrix &amp; Metrik Per Kelas (<code>Fold 0</code>):</strong> <code>QWK 0,9228</code> dan <code>Referable DR AUROC 0,9864</code> tanpa kelas yang runtuh ke <code>0,00</code>.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img src="docs/assets/plots/05-gradcam-grade0-to-grade4.png" alt="Galeri Grad-CAM++ Grade 0 sampai Grade 4" width="100%" />
+      <br />
+      <sub><strong>Galeri Aktivasi Spasial <code>Grad-CAM++</code>:</strong> Peta atensi model final <code>ConvNeXt-V2-Tiny</code> pada lima contoh kelas nyata <code>Fold 0</code>.</sub>
+    </td>
+  </tr>
+</table>
+
+### 5. Kesesuaian dengan Outline Proyek Mata Kuliah
+
+| Butir Outline Awal | Realisasi pada Repositori & Peningkatan Paket B |
+| :--- | :--- |
+| Audit struktur berkas & larangan evaluasi memakai `test.csv` tanpa label | Terpenuhi penuh oleh [audit_dataset.py](src/visikom_dr/audit_dataset.py), ditambah deduplikasi `pHash`/`dHash` dan `StratifiedGroupKFold` |
+| Prapemrosesan citra retina | Terpenuhi dan ditingkatkan dari `224 px` mentah menjadi `384 x 384` `circular_roi_crop` + ablasi `Lab-CLAHE` vs `Ben Graham` |
+| Pelatihan & perbandingan `ResNet-50` dan `EfficientNet-B0` | Kedua arsitektur dilatih dan dibandingkan (`0,8730` vs `0,8740` Val QWK), disertai penantang `ConvNeXt-V2-Tiny` (`0,8914`) |
+| Penanganan ketidakseimbangan kelas | Terpenuhi lewat ablasi terkontrol `E3` (`CE polos` vs `CE single-weight` vs `CORN` vs `SmoothL1Loss + OptimizedRounder`) |
+| Confusion matrix, grafik pelatihan, & metrik per kelas + QWK | Tersedia di `outputs/kaggle_full/` dan dirender ulang otomatis ke `docs/assets/plots/` |
+| Aplikasi pratinjau, unggah foto, prediksi Grade 0-4, & batasan klinis | Diimplementasikan lewat web *mobile-first* `Mydria` (`FastAPI + ONNX Runtime + React`), dilengkapi gerbang kualitas OpenCV dan peta panas `Grad-CAM++` |
 
 ---
 
