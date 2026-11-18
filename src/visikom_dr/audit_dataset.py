@@ -13,6 +13,8 @@ import cv2
 import numpy as np
 import pandas as pd
 
+from visikom_dr.preprocessing import circular_roi_crop
+
 _POPCOUNT_BYTE = np.array([bin(i).count("1") for i in range(256)], dtype=np.uint8)
 
 
@@ -90,8 +92,9 @@ def _pairwise_hamming_chunked(
 
 def cluster_near_duplicates(
     df: pd.DataFrame,
-    phash_threshold: int = 6,
-    dhash_threshold: int = 6,
+    phash_threshold: int = 4,
+    dhash_threshold: int = 4,
+    require_both: bool = True,
 ) -> pd.DataFrame:
     """Kelompokkan citra duplikat dan tandai klaster dengan konflik label diagnosis."""
     out = df.copy().reset_index(drop=True)
@@ -112,7 +115,10 @@ def cluster_near_duplicates(
         end = min(start + block_size, n)
         p_dist = _pairwise_hamming_chunked(phashes, start, end)
         d_dist = _pairwise_hamming_chunked(dhashes, start, end)
-        match_mask = (p_dist <= phash_threshold) | (d_dist <= dhash_threshold)
+        if require_both:
+            match_mask = (p_dist <= phash_threshold) & (d_dist <= dhash_threshold)
+        else:
+            match_mask = (p_dist <= phash_threshold) | (d_dist <= dhash_threshold)
         rows, cols = np.where(match_mask)
         for r_off, c in zip(rows.tolist(), cols.tolist()):
             r = start + r_off
@@ -180,10 +186,13 @@ def assign_stratified_group_splits(
         best_fold = 0
         best_cost = float("inf")
         for f in range(n_folds):
-            cand_vec = fold_class_counts[f] + vec
-            rel_err = ((cand_vec - target_per_fold) ** 2) / (target_per_fold + 1.0)
-            size_err = ((fold_totals[f] + csize - target_total) ** 2) / (target_total + 1.0)
-            cost = float(rel_err.sum() + 0.25 * size_err)
+            before_vec = fold_class_counts[f]
+            after_vec = before_vec + vec
+            before_rel = ((before_vec - target_per_fold) ** 2) / (target_per_fold + 1.0)
+            after_rel = ((after_vec - target_per_fold) ** 2) / (target_per_fold + 1.0)
+            before_size = ((fold_totals[f] - target_total) ** 2) / (target_total + 1.0)
+            after_size = ((fold_totals[f] + csize - target_total) ** 2) / (target_total + 1.0)
+            cost = float((after_rel - before_rel).sum() + 0.25 * (after_size - before_size))
             if cost < best_cost:
                 best_cost = cost
                 best_fold = f
@@ -204,6 +213,27 @@ def _resolve_image_path(images_dir: Path, id_code: str) -> Path | None:
     return None
 
 
+def _extract_fundus_hash_roi(rgb: np.ndarray) -> np.ndarray:
+    """Ambil area retina bagian dalam bebas bingkai hitam agar hash perseptual tidak berantai."""
+    h, w = rgb.shape[:2]
+    max_side = max(h, w)
+    if max_side > 512:
+        scale = 512.0 / float(max_side)
+        rgb = cv2.resize(
+            rgb,
+            (max(16, int(round(w * scale))), max(16, int(round(h * scale)))),
+            interpolation=cv2.INTER_AREA,
+        )
+    cropped, mask = circular_roi_crop(rgb)
+    fg_ratio = float((mask > 0).mean()) if mask.size else 0.0
+    side = cropped.shape[0]
+    if fg_ratio > 0.10 and side >= 32:
+        margin = int(side * 0.15)
+        if side - 2 * margin >= 16:
+            return cropped[margin : side - margin, margin : side - margin]
+    return cropped
+
+
 def _audit_single_row(
     images_dir: Path,
     id_code: str,
@@ -217,15 +247,16 @@ def _audit_single_row(
     if bgr is None or bgr.size == 0:
         return False, {"id_code": id_code, "diagnosis": diagnosis, "reason": "unreadable_image"}
 
-    gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
-    h, w = gray.shape
+    h, w = bgr.shape[:2]
+    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    roi = _extract_fundus_hash_roi(rgb)
     return True, {
         "id_code": id_code,
         "diagnosis": diagnosis,
         "width": int(w),
         "height": int(h),
-        "phash": str(compute_phash_64(gray)),
-        "dhash": str(compute_dhash_64(gray)),
+        "phash": str(compute_phash_64(roi)),
+        "dhash": str(compute_dhash_64(roi)),
     }
 
 
@@ -235,8 +266,9 @@ def audit_aptos_directory(
     summary_json: Path | None = None,
     n_folds: int = 5,
     holdout_fold: int = 0,
-    phash_threshold: int = 6,
-    dhash_threshold: int = 6,
+    phash_threshold: int = 4,
+    dhash_threshold: int = 4,
+    require_both: bool = True,
     seed: int = 42,
     max_workers: int | None = None,
     progress_every: int = 400,
@@ -281,6 +313,7 @@ def audit_aptos_directory(
         valid_df,
         phash_threshold=phash_threshold,
         dhash_threshold=dhash_threshold,
+        require_both=require_both,
     )
     split_df = assign_stratified_group_splits(
         clustered_df,
@@ -297,11 +330,17 @@ def audit_aptos_directory(
         "invalid_images": int(len(invalid_records)),
         "invalid_details": invalid_records,
         "unique_clusters": int(split_df["cluster_id"].nunique()) if len(split_df) else 0,
+        "max_cluster_size": int(split_df["cluster_size"].max()) if len(split_df) else 0,
         "images_in_duplicate_clusters": int(len(duplicate_clusters)),
         "num_duplicate_clusters": int(duplicate_clusters["cluster_id"].nunique()) if len(duplicate_clusters) else 0,
         "images_in_label_conflict_clusters": int(len(conflict_clusters)),
         "num_label_conflict_clusters": int(conflict_clusters["cluster_id"].nunique()) if len(conflict_clusters) else 0,
         "split_counts": split_df["split"].value_counts().to_dict() if len(split_df) else {},
+        "fold_counts": (
+            {int(k): int(v) for k, v in split_df["fold"].value_counts().sort_index().items()}
+            if len(split_df)
+            else {}
+        ),
         "diagnosis_by_split": (
             split_df.groupby(["split", "diagnosis"]).size().unstack(fill_value=0).to_dict(orient="index")
             if len(split_df)
@@ -329,8 +368,8 @@ def main() -> None:
     parser.add_argument("--summary-json", type=Path, default=Path("outputs/aptos_audit_summary.json"))
     parser.add_argument("--n-folds", type=int, default=5)
     parser.add_argument("--holdout-fold", type=int, default=0)
-    parser.add_argument("--phash-threshold", type=int, default=6)
-    parser.add_argument("--dhash-threshold", type=int, default=6)
+    parser.add_argument("--phash-threshold", type=int, default=4)
+    parser.add_argument("--dhash-threshold", type=int, default=4)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 

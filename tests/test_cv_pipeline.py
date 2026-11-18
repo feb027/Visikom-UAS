@@ -179,6 +179,38 @@ class TestComputerVisionPipeline(unittest.TestCase):
             self.assertEqual(summary["invalid_images"], 1)
             self.assertEqual(summary["num_label_conflict_clusters"], 1)
 
+    def test_black_border_funduses_do_not_snowball_cluster(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            img_dir = root / "train_images"
+            img_dir.mkdir(parents=True, exist_ok=True)
+
+            csv_rows: list[dict[str, object]] = []
+            rng = np.random.default_rng(77)
+            for idx in range(25):
+                canvas = _make_synthetic_fundus(width=400, height=300, seed=idx)
+                # Variasi fitur acak unik agar setiap retina sintetis mewakili pasien berbeda.
+                for _ in range(18):
+                    px = int(rng.integers(130, 270))
+                    py = int(rng.integers(85, 215))
+                    cv2.circle(canvas, (px, py), int(rng.integers(3, 8)), (75, 18, 12), thickness=-1)
+                code = f"patient_{idx:02d}"
+                cv2.imwrite(str(img_dir / f"{code}.png"), cv2.cvtColor(canvas, cv2.COLOR_RGB2BGR))
+                csv_rows.append({"id_code": code, "diagnosis": idx % 5})
+                if idx == 0:
+                    shifted = np.clip(canvas.astype(np.int16) + 2, 0, 255).astype(np.uint8)
+                    cv2.imwrite(str(img_dir / "patient_00_dup.png"), cv2.cvtColor(shifted, cv2.COLOR_RGB2BGR))
+                    csv_rows.append({"id_code": "patient_00_dup", "diagnosis": 1})
+
+            pd.DataFrame(csv_rows).to_csv(root / "train.csv", index=False)
+            split_df, summary = audit_aptos_directory(data_dir=root, n_folds=5, holdout_fold=0, seed=42)
+
+            self.assertGreaterEqual(summary["unique_clusters"], 22)
+            self.assertLessEqual(summary["max_cluster_size"], 3)
+            self.assertEqual(split_df["fold"].nunique(), 5)
+            self.assertEqual(split_df.loc[split_df["id_code"] == "patient_00", "cluster_id"].iloc[0],
+                             split_df.loc[split_df["id_code"] == "patient_00_dup", "cluster_id"].iloc[0])
+
 
 if __name__ == "__main__":
     unittest.main()
