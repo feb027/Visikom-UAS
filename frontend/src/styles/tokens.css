@@ -4,7 +4,8 @@
   /* Mode Terang Default: Braun Warm Paper */
   --bg-canvas: #F4F3EE;
   --bg-recessed: #E6E4DC;
-  --bg-dock: rgba(248, 247, 243, 0.92);
+  --bg-dock: rgba(235, 234, 227, 0.92);
+  --dock-active-bg: #FFFFFF;
   --border-hairline: #D2CFC5;
   --text-primary: #141413;
   --text-secondary: #575651;
@@ -23,7 +24,8 @@
   @media (prefers-color-scheme: dark) {
     --bg-canvas: #111110;
     --bg-recessed: #222220;
-    --bg-dock: rgba(24, 24, 22, 0.92);
+    --bg-dock: rgba(28, 28, 26, 0.92);
+    --dock-active-bg: #2E2D29;
     --border-hairline: #2E2D29;
     --text-primary: #F2F1EC;
     --text-secondary: #A6A49B;
@@ -43,7 +45,8 @@
   @supports (color: light-dark(white, black)) {
     --bg-canvas: light-dark(#F4F3EE, #111110);
     --bg-recessed: light-dark(#E6E4DC, #222220);
-    --bg-dock: light-dark(rgba(248, 247, 243, 0.92), rgba(24, 24, 22, 0.92));
+    --bg-dock: light-dark(rgba(235, 234, 227, 0.92), rgba(28, 28, 26, 0.92));
+    --dock-active-bg: light-dark(#FFFFFF, #2E2D29);
     --border-hairline: light-dark(#D2CFC5, #2E2D29);
     --text-primary: light-dark(#141413, #F2F1EC);
     --text-secondary: light-dark(#575651, #A6A49B);

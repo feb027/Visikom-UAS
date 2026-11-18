@@ -1,49 +1,38 @@
+const PIPELINE_STEPS = [
+  { step: "01", label: "Audit pHash+dHash" },
+  { step: "02", label: "Quality Gate OpenCV" },
+  { step: "03", label: "ONNX Inference" },
+  { step: "04", label: "Grad-CAM++" },
+];
+
 const SPEC_SECTIONS = [
   {
     index: "01",
-    title: "Audit Deduplikasi & Partisi Bebas Bocor",
-    body: (
-      <>
-        Citra fundus dipotong memakai <code>circular_roi_crop</code> dan dipangkas 15% dari tepi untuk menghilangkan
-        bingkai hitam kamera. Kemiripan dihitung melalui konjungsi <code>pHash &lt;= 4</code> dan{" "}
-        <code>dHash &lt;= 4</code> agar salinan pasien yang sama masuk ke satu klaster utuh pada{" "}
-        <code>StratifiedGroupKFold</code> (5 fold, fold 0 terkunci sebagai uji akhir).
-      </>
-    ),
+    title: "Audit Bebas Bocor",
+    description:
+      "Citra dipotong dengan circular_roi_crop lalu dipangkas 15% dari tepi sebelum dihitung kesamaan pHash dan dHash agar duplikat satu pasien tidak terpecah antar fold.",
+    param: "pHash <= 4 & dHash <= 4 · 5 Fold",
   },
   {
     index: "02",
-    title: "Gerbang Kualitas OpenCV Sebelum Inferensi",
-    body: (
-      <>
-        Setiap unggahan diperiksa rasio cakram terang, rasio kanal merah terhadap biru (&gt;= 1,25) dan hijau
-        (&gt;= 1,03), serta variansi Laplacian pada radius 85% cakram retina. Gambar bukan fundus langsung ditolak;
-        citra buram tetap diberi peringatan kualitas rendah.
-      </>
-    ),
+    title: "Gerbang Kualitas OpenCV",
+    description:
+      "Memeriksa luas wilayah retina, perbandingan spektrum merah-biru dan merah-hijau, serta variansi Laplacian pada radius dalam 85% cakram retina.",
+    param: "ROI >= 15% · R/B >= 1.25 · Laplacian >= 25",
   },
   {
     index: "03",
-    title: "Ablasi E1 hingga E4 & Ekspor ONNX",
-    body: (
-      <>
-        Pipeline menguji empat metode prapemrosesan klasik (raw_resize, crop_only, lab_clahe, ben_graham), tiga
-        arsitektur lintas generasi (ResNet-50, EfficientNet-B0, ConvNeXt-V2-Tiny), serta empat skema loss ordinal
-        (CE polos, CE bobot tunggal tanpa penggandaan, CORN, Smooth L1) sebelum kalibrasi Temperature Scaling dan
-        ekspor ONNX dua keluaran (<code>raw_output</code>, <code>cam_maps</code>).
-      </>
-    ),
+    title: "Pelatihan & Kalibrasi",
+    description:
+      "Ablasi berurutan E1 (prapemrosesan), E2 (ResNet-50, EfficientNet-B0, ConvNeXt-V2-Tiny), dan E3 (loss ordinal & penyeimbangan tunggal), dilanjutkan Temperature Scaling.",
+    param: "384 px · Temperature Scaling · ONNX",
   },
   {
     index: "04",
-    title: "Batasan Klinis & Interpretabilitas Grad-CAM++",
-    body: (
-      <>
-        Peta panas Grad-CAM++ memperlihatkan area yang paling memengaruhi keluaran jaringan saraf, bukan segmentasi
-        mikroaneurisma atau eksudat berstandar klinis. Perangkat lunak Mydria dibuat untuk keperluan riset dan
-        presentasi akademik UAS Visi Komputer, bukan alat diagnosis medis resmi.
-      </>
-    ),
+    title: "Batasan Riset Akademik",
+    description:
+      "Peta Grad-CAM++ memperlihatkan bagian yang paling memengaruhi penilaian model, bukan segmentasi lesi mikroaneurisma klinis. Bukan pengganti diagnosis dokter mata.",
+    param: "UAS Visi Komputer & Robotika",
   },
 ];
 
@@ -58,20 +47,50 @@ export function MethodologyTab() {
           Metodologi &amp; Batasan
         </h1>
         <p className="m-0 mt-1 text-sm text-[var(--text-secondary)]">
-          Spesifikasi teknis pipeline Paket B serta batasan penggunaan prototipe akademik.
+          Alur teknis pipeline visi komputer Paket B serta batasan pemakaian riset.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-x-10 divide-y divide-[var(--border-hairline)] sm:grid-cols-2 sm:divide-y-0">
+      {/* Skema vektor pipeline horizontal */}
+      <div className="border-t border-[var(--border-hairline)] pt-5">
+        <div className="relative grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-6">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-[22px] right-12 left-12 hidden h-px bg-[var(--border-hairline)] sm:block"
+          />
+          {PIPELINE_STEPS.map((item, idx) => (
+            <div key={item.step} className="relative flex flex-col items-center text-center">
+              <div className="relative z-10 flex h-11 w-11 items-center justify-center border border-[var(--text-primary)] bg-[var(--bg-canvas)] text-sm font-bold tabular-nums text-[var(--text-primary)]">
+                {item.step}
+              </div>
+              {idx < PIPELINE_STEPS.length - 1 ? (
+                <span
+                  aria-hidden="true"
+                  className="hidden sm:block absolute top-[19px] -right-1 z-10 h-2 w-2 rounded-full bg-[var(--accent-signal)]"
+                />
+              ) : null}
+              <p className="m-0 mt-2 text-xs font-semibold text-[var(--text-primary)]">{item.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 4 bagian spesifikasi teknis bernomor 01..04 terpisah garis 1px */}
+      <div className="grid grid-cols-1 gap-x-10 border-t border-[var(--border-hairline)] sm:grid-cols-2">
         {SPEC_SECTIONS.map((sec) => (
-          <div key={sec.index} className="border-t border-[var(--border-hairline)] py-5">
+          <div key={sec.index} className="border-b border-[var(--border-hairline)] py-5">
             <div className="flex items-baseline gap-3">
-              <span className="tabular-nums text-xs font-semibold text-[var(--accent-signal)]">
+              <span className="tabular-nums text-lg font-bold text-[var(--accent-signal)]">
                 {sec.index}
               </span>
               <h2 className="m-0 text-base font-semibold text-[var(--text-primary)]">{sec.title}</h2>
             </div>
-            <p className="m-0 mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{sec.body}</p>
+            <p className="m-0 mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
+              {sec.description}
+            </p>
+            <p className="tabular-nums m-0 mt-3 border-t border-[var(--border-hairline)] pt-2 text-xs font-medium text-[var(--text-primary)]">
+              {sec.param}
+            </p>
           </div>
         ))}
       </div>

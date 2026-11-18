@@ -54,6 +54,23 @@ def _decode_upload_bytes(data: bytes) -> np.ndarray | None:
     return cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
 
 
+def _trim_letterbox_for_view(
+    layers: list[np.ndarray],
+    reference_rgb: np.ndarray,
+) -> list[np.ndarray]:
+    """Buang pita hitam atas-bawah sisa padding persegi agar viewfinder bundar terisi penuh."""
+    gray = cv2.cvtColor(reference_rgb, cv2.COLOR_RGB2GRAY)
+    row_active = np.where((gray > 10).mean(axis=1) > 0.05)[0]
+    col_active = np.where((gray > 10).mean(axis=0) > 0.05)[0]
+    if row_active.size == 0 or col_active.size == 0:
+        return layers
+    y0, y1 = int(row_active[0]), int(row_active[-1]) + 1
+    x0, x1 = int(col_active[0]), int(col_active[-1]) + 1
+    if (y1 - y0) < 32 or (x1 - x0) < 32:
+        return layers
+    return [img[y0:y1, x0:x1] for img in layers]
+
+
 class OnnxInferenceService:
     """Mengelola sesi ONNX Runtime beserta cache artefak aktif dengan pemuatan malas."""
 
@@ -192,6 +209,11 @@ class OnnxInferenceService:
         cam_heat = cam_map_from_onnx_output(cam_maps, target_index=cam_idx, out_size=input_size)
         cam_overlay = overlay_heatmap_on_fundus(pre_crop, cam_heat, alpha=0.40)
 
+        view_crop, view_clahe, view_graham, view_cam = _trim_letterbox_for_view(
+            [pre_crop, pre_clahe, pre_graham, cam_overlay],
+            reference_rgb=pre_crop,
+        )
+
         prob_items = [
             ClassProbabilityItem(grade=i, label=CLASS_LABELS[i], probability=float(probs[i]))
             for i in range(len(CLASS_LABELS))
@@ -217,11 +239,11 @@ class OnnxInferenceService:
             disclaimer=CLINICAL_DISCLAIMER,
             probabilities=prob_items,
             viewer_layers=ViewerLayers(
-                original_crop=_encode_rgb_data_url(pre_crop),
+                original_crop=_encode_rgb_data_url(view_crop),
                 raw_resize=_encode_rgb_data_url(pre_raw),
-                lab_clahe=_encode_rgb_data_url(pre_clahe),
-                ben_graham=_encode_rgb_data_url(pre_graham),
-                gradcam_overlay=_encode_rgb_data_url(cam_overlay),
+                lab_clahe=_encode_rgb_data_url(view_clahe),
+                ben_graham=_encode_rgb_data_url(view_graham),
+                gradcam_overlay=_encode_rgb_data_url(view_cam),
             ),
         )
 

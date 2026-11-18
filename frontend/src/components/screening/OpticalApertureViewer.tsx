@@ -119,14 +119,14 @@ export function OpticalApertureViewer({
                 <img
                   src={originalImageUrl}
                   alt="Citra fundus retina asli"
-                  className="pointer-events-none block h-full w-full select-none object-contain"
+                  className="pointer-events-none block h-full w-full select-none object-cover object-center"
                 />
                 {showSplit ? (
                   <>
                     <img
                       src={processedImageUrl}
                       alt={`Citra fundus mode ${activeLayerLabel}`}
-                      className="pointer-events-none absolute inset-0 block h-full w-full select-none object-contain"
+                      className="pointer-events-none absolute inset-0 block h-full w-full select-none object-cover object-center"
                       style={{ clipPath: `inset(0 0 0 ${splitPercent}%)` }}
                     />
                     <div
@@ -269,15 +269,15 @@ export function OpticalApertureViewer({
       >
         {processedImageUrl ? (
           <div className="space-y-3">
-            <div className="overflow-hidden rounded-full border border-[var(--border-hairline)] bg-[#07080A] p-3">
+            <div className="overflow-hidden rounded-[14px] border border-[var(--border-hairline)] bg-[#07080A] p-2">
               <img
                 src={processedImageUrl}
                 alt={`Perbesaran fundus ${activeLayerLabel}`}
-                className="mx-auto aspect-square w-full max-w-[440px] rounded-full object-contain"
+                className="mx-auto max-h-[60dvh] w-full max-w-[460px] object-contain"
               />
             </div>
             <p className="m-0 text-xs text-[var(--text-secondary)]">
-              Resolusi analisis 384 x 384 piksel. Warna hangat pada mode Grad-CAM++ menunjukkan area yang paling memengaruhi penilaian model.
+              Resolusi analisis 384 x 384 piksel. Warna hangat pada mode Grad-CAM++ menandai area yang paling memengaruhi penilaian model.
             </p>
           </div>
         ) : null}

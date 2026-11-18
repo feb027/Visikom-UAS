@@ -50,12 +50,18 @@ class TestBackendApi(unittest.TestCase):
         self.assertEqual(len(m_json["e1_preprocessing"]), 4)
 
     def test_predict_example_and_reject_non_fundus(self) -> None:
-        pred_ok = self.client.post("/api/predict?example_id=0125fbd2e791")
+        pred_ok = self.client.post("/api/predict?example_id=000c1434d8d7")
         self.assertEqual(pred_ok.status_code, 200)
         body = pred_ok.json()
         self.assertTrue(body["accepted"])
         self.assertEqual(len(body["probabilities"]), 5)
         self.assertTrue(body["viewer_layers"]["gradcam_overlay"].startswith("data:image/png;base64,"))
+
+        import base64
+        crop_b64 = body["viewer_layers"]["original_crop"].split(",", 1)[1]
+        crop_arr = cv2.imdecode(np.frombuffer(base64.b64decode(crop_b64), np.uint8), cv2.IMREAD_COLOR)
+        self.assertGreater(float(crop_arr[0].mean()), 8.0)
+        self.assertGreater(float(crop_arr[-1].mean()), 8.0)
 
         blue_screen = np.full((256, 256, 3), (235, 110, 20), dtype=np.uint8)
         ok, buf = cv2.imencode(".png", blue_screen)
