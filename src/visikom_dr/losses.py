@@ -5,12 +5,24 @@ from __future__ import annotations
 from typing import Iterable
 
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from scipy.optimize import minimize
+
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+except ImportError:
+    torch = None  # type: ignore[assignment]
+    nn = None  # type: ignore[assignment]
+    F = None  # type: ignore[assignment]
 
 from visikom_dr.metrics import quadratic_weighted_kappa
+
+_ModuleBase = nn.Module if nn is not None else object
+
+
+def _require_torch_module() -> None:
+    if torch is None or nn is None or F is None:
+        raise ImportError("PyTorch diperlukan untuk modul loss/pelatihan ini (pasang extra '.[train]').")
 
 
 def validate_rebalance_config(use_sampler: bool, use_class_weights: bool) -> None:
@@ -42,10 +54,11 @@ def compute_single_rebalance_weights(
     return weights.astype(np.float32)
 
 
-class CORNLoss(nn.Module):
+class CORNLoss(_ModuleBase):
     """Rank-consistent ordinal regression berdasarkan probabilitas kondisional berurutan."""
 
     def __init__(self, num_classes: int = 5) -> None:
+        _require_torch_module()
         super().__init__()
         self.num_classes = num_classes
 
@@ -74,6 +87,7 @@ class CORNLoss(nn.Module):
 
 def corn_logits_to_probs(logits: torch.Tensor) -> torch.Tensor:
     """Konversi K-1 logit kondisional CORN menjadi distribusi probabilitas K kelas."""
+    _require_torch_module()
     cond_probs = torch.sigmoid(logits)
     cum_probs = torch.cumprod(cond_probs, dim=1)
     p0 = 1.0 - cum_probs[:, :1]
@@ -97,6 +111,7 @@ def corn_logits_to_numpy_probs(logits: np.ndarray) -> np.ndarray:
 
 
 def corn_logits_to_preds(logits: torch.Tensor) -> torch.Tensor:
+    _require_torch_module()
     cum_probs = torch.cumprod(torch.sigmoid(logits), dim=1)
     return (cum_probs > 0.5).sum(dim=1)
 
@@ -116,6 +131,8 @@ class OptimizedRounder:
         self.thresholds = tuple(float(t) for t in initial_thresholds)
 
     def fit(self, scores: np.ndarray, y_true: np.ndarray) -> tuple[float, ...]:
+        from scipy.optimize import minimize
+
         sc = np.asarray(scores, dtype=np.float64).ravel()
         yt = np.asarray(y_true, dtype=np.int64).ravel()
 

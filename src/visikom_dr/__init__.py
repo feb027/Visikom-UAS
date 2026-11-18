@@ -1,5 +1,10 @@
 """Paket inti Mydria untuk audit data, Visi Komputer klasik, pelatihan, dan ekspor ONNX."""
 
+from __future__ import annotations
+
+from importlib import import_module
+from typing import Any
+
 from visikom_dr.audit_dataset import (
     assign_stratified_group_splits,
     audit_aptos_directory,
@@ -7,16 +12,6 @@ from visikom_dr.audit_dataset import (
     compute_dhash_64,
     compute_phash_64,
     hamming_distance,
-)
-from visikom_dr.calibration_xai import (
-    CalibrationResult,
-    TemperatureScaler,
-    cam_map_from_onnx_output,
-    compute_gradcam_plusplus,
-    export_model_to_onnx,
-    overlay_heatmap_on_fundus,
-    raw_output_to_calibrated_probs,
-    raw_output_to_predictions,
 )
 from visikom_dr.losses import (
     CORNLoss,
@@ -35,7 +30,6 @@ from visikom_dr.metrics import (
     expected_calibration_error,
     quadratic_weighted_kappa,
 )
-from visikom_dr.models import RetinaGradingModel
 from visikom_dr.preprocessing import (
     apply_ben_graham,
     apply_lab_clahe,
@@ -44,14 +38,39 @@ from visikom_dr.preprocessing import (
     resize_square,
 )
 from visikom_dr.quality_gate import FundusQualityReport, assess_fundus_quality
-from visikom_dr.train import (
-    EXPERIMENT_PRESETS,
-    AptosFundusDataset,
-    TrainConfig,
-    image_to_tensor,
-    prepare_preprocessed_cache,
-    run_training_experiment,
-)
+
+# Simbol pelatihan/PyTorch dimuat secara malas agar mode inferensi ONNX tanpa torch tetap berjalan.
+_LAZY_EXPORTS: dict[str, tuple[str, str]] = {
+    "CalibrationResult": ("visikom_dr.calibration_xai", "CalibrationResult"),
+    "TemperatureScaler": ("visikom_dr.calibration_xai", "TemperatureScaler"),
+    "cam_map_from_onnx_output": ("visikom_dr.calibration_xai", "cam_map_from_onnx_output"),
+    "compute_gradcam_plusplus": ("visikom_dr.calibration_xai", "compute_gradcam_plusplus"),
+    "export_model_to_onnx": ("visikom_dr.calibration_xai", "export_model_to_onnx"),
+    "overlay_heatmap_on_fundus": ("visikom_dr.calibration_xai", "overlay_heatmap_on_fundus"),
+    "raw_output_to_calibrated_probs": ("visikom_dr.calibration_xai", "raw_output_to_calibrated_probs"),
+    "raw_output_to_predictions": ("visikom_dr.calibration_xai", "raw_output_to_predictions"),
+    "RetinaGradingModel": ("visikom_dr.models", "RetinaGradingModel"),
+    "EXPERIMENT_PRESETS": ("visikom_dr.train", "EXPERIMENT_PRESETS"),
+    "AptosFundusDataset": ("visikom_dr.train", "AptosFundusDataset"),
+    "TrainConfig": ("visikom_dr.train", "TrainConfig"),
+    "image_to_tensor": ("visikom_dr.train", "image_to_tensor"),
+    "prepare_preprocessed_cache": ("visikom_dr.train", "prepare_preprocessed_cache"),
+    "run_training_experiment": ("visikom_dr.train", "run_training_experiment"),
+}
+
+
+def __getattr__(name: str) -> Any:
+    target = _LAZY_EXPORTS.get(name)
+    if target is None:
+        raise AttributeError(f"module 'visikom_dr' has no attribute {name!r}")
+    module_name, attr_name = target
+    value = getattr(import_module(module_name), attr_name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(__all__))
 
 __all__ = [
     "AptosFundusDataset",

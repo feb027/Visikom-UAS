@@ -9,9 +9,13 @@ from typing import Any, Sequence
 
 import cv2
 import numpy as np
-import torch
-import torch.nn as nn
-from scipy.optimize import minimize
+
+try:
+    import torch
+    import torch.nn as nn
+except ImportError:
+    torch = None  # type: ignore[assignment]
+    nn = None  # type: ignore[assignment]
 
 from visikom_dr.losses import (
     OptimizedRounder,
@@ -20,6 +24,11 @@ from visikom_dr.losses import (
     corn_probs_to_preds,
 )
 from visikom_dr.metrics import expected_calibration_error
+
+
+def _require_torch() -> None:
+    if torch is None or nn is None:
+        raise ImportError("PyTorch diperlukan untuk operasi pelatihan/ekspor ini (pasang extra '.[train]').")
 
 
 @dataclass(frozen=True)
@@ -107,6 +116,8 @@ class TemperatureScaler:
         self.smooth_sigma = float(smooth_sigma)
 
     def fit(self, raw_outputs: np.ndarray, y_true: np.ndarray, head_type: str) -> CalibrationResult:
+        from scipy.optimize import minimize
+
         raw = np.asarray(raw_outputs, dtype=np.float64)
         yt = np.asarray(y_true, dtype=np.int64).ravel()
 
@@ -157,6 +168,7 @@ def compute_gradcam_plusplus(
     target_index: int | None = None,
 ) -> np.ndarray:
     """Hitung peta aktivasi Grad-CAM++ pada feature_tap untuk citra tunggal [1, 3, H, W]."""
+    _require_torch()
     if input_tensor.ndim != 4 or input_tensor.shape[0] != 1:
         raise ValueError(f"Grad-CAM++ membutuhkan tensor [1, 3, H, W], diterima {tuple(input_tensor.shape)}")
 
@@ -259,15 +271,6 @@ def overlay_heatmap_on_fundus(
     return np.clip(out, 0, 255).astype(np.uint8)
 
 
-class _OnnxExportWrapper(nn.Module):
-    def __init__(self, model: nn.Module) -> None:
-        super().__init__()
-        self.model = model
-
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        return self.model.forward_with_cam(x)
-
-
 def export_model_to_onnx(
     model: nn.Module,
     output_onnx_path: Path,
@@ -280,6 +283,16 @@ def export_model_to_onnx(
     extra_meta: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Ekspor model ke format ONNX beserta metadata kalibrasi untuk backend FastAPI."""
+    _require_torch()
+
+    class _OnnxExportWrapper(nn.Module):
+        def __init__(self, inner: nn.Module) -> None:
+            super().__init__()
+            self.model = inner
+
+        def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+            return self.model.forward_with_cam(x)
+
     output_onnx_path = Path(output_onnx_path)
     meta_json_path = Path(meta_json_path)
     output_onnx_path.parent.mkdir(parents=True, exist_ok=True)
