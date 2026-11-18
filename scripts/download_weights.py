@@ -69,6 +69,11 @@ def main() -> int:
     parser.add_argument("--repo", default=DEFAULT_REPO, help="Slug repositori GitHub (pemilik/repo).")
     parser.add_argument("--tag", default=DEFAULT_TAG, help="Tag rilis GitHub.")
     parser.add_argument(
+        "--skip-if-present",
+        action="store_true",
+        help="Lewati berkas yang sudah ada secara lokal (perilaku bawaan bila tanpa --force).",
+    )
+    parser.add_argument(
         "--force",
         action="store_true",
         help="Unduh ulang walau berkas sudah ada secara lokal.",
