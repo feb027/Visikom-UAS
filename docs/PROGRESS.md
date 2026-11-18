@@ -35,6 +35,7 @@
 ## Daftar Periksa Sesi Berikutnya
 
 - [x] Memperbarui `notebooks/paket_b_training_colab_kaggle.ipynb` dengan `REPO_URL` publik, dukungan *auto-resume* pada `outputs/full/`, serta ekstraksi aman `train_images` di Google Colab, lalu menginisialisasi Git dan mengunggah ke repositori publik `https://github.com/feb027/Visikom-UAS`.
-- [ ] Menjalankan *smoke test* dan pelatihan penuh pada `notebooks/paket_b_training_colab_kaggle.ipynb` di Google Colab (`T4 GPU`).
-- [ ] Sambil menunggu proses GPU di Colab selesai, membangun aplikasi web *mobile-first* `Mydria` (`backend/` FastAPI + `onnxruntime-directml` dan `frontend/` React + TypeScript + Vite + Tailwind CSS v4) mengacu penuh pada `DESIGN.md`.
-- [ ] Menempatkan `model_best.onnx` dan `model_meta.json` hasil Colab ke `models/weights/` serta mengisi nama asli kelima anggota kelompok pada `docs/00-project-brief.md`.
+- [x] Menambahkan pemrosesan paralel (`ThreadPoolExecutor`) dan log progres berkala pada `audit_aptos_directory` serta `prepare_preprocessed_cache`, menambahkan log per-epoch di `train.py`, memindahkan direktori sementara Kaggle ke `/tmp/visikom_work`, serta membuat `scripts/kaggle_job.py` untuk mengotomasi `push`, `status`, dan `output` ke GPU T4 Kaggle via CLI.
+- [ ] Menjalankan *smoke test* dan pelatihan penuh pada `notebooks/paket_b_training_colab_kaggle.ipynb` di Kaggle GPU (`NvidiaTeslaT4`).
+- [ ] Sambil menunggu proses GPU di Kaggle selesai, membangun aplikasi web *mobile-first* `Mydria` (`backend/` FastAPI + `onnxruntime-directml` dan `frontend/` React + TypeScript + Vite + Tailwind CSS v4) mengacu penuh pada `DESIGN.md`.
+- [ ] Menempatkan `model_best.onnx` dan `model_meta.json` hasil pelatihan ke `models/weights/` serta mengisi nama asli kelima anggota kelompok pada `docs/00-project-brief.md`.

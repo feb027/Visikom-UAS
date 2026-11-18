@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -54,29 +56,53 @@ def _resolve_raw_image(raw_images_dir: Path, id_code: str) -> Path:
     raise FileNotFoundError(f"Berkas citra untuk id_code '{id_code}' tidak ditemukan di {raw_images_dir}")
 
 
+def _cache_single_image(
+    id_code: str,
+    raw_dir: Path,
+    target_dir: Path,
+    mode: str,
+    size: int,
+) -> bool:
+    out_path = target_dir / f"{id_code}.png"
+    if out_path.exists():
+        return False
+    src_path = _resolve_raw_image(raw_dir, id_code)
+    bgr = cv2.imread(str(src_path), cv2.IMREAD_COLOR)
+    if bgr is None:
+        raise ValueError(f"Gagal membaca citra: {src_path}")
+    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    processed = preprocess_fundus(rgb, mode=mode, size=size)
+    cv2.imwrite(str(out_path), cv2.cvtColor(processed, cv2.COLOR_RGB2BGR))
+    return True
+
+
 def prepare_preprocessed_cache(
     split_df: pd.DataFrame,
     raw_images_dir: Path,
     cache_dir: Path,
     mode: str = "lab_clahe",
     size: int = 384,
+    max_workers: int | None = None,
+    progress_every: int = 400,
 ) -> Path:
     """Proses dan simpan seluruh citra prapemrosesan ke disk lokal agar epoch berjalan cepat."""
     target_dir = Path(cache_dir) / f"{mode}_{size}"
     target_dir.mkdir(parents=True, exist_ok=True)
     raw_dir = Path(raw_images_dir)
 
-    for id_code in split_df["id_code"].astype(str):
-        out_path = target_dir / f"{id_code}.png"
-        if out_path.exists():
-            continue
-        src_path = _resolve_raw_image(raw_dir, id_code)
-        bgr = cv2.imread(str(src_path), cv2.IMREAD_COLOR)
-        if bgr is None:
-            raise ValueError(f"Gagal membaca citra: {src_path}")
-        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-        processed = preprocess_fundus(rgb, mode=mode, size=size)
-        cv2.imwrite(str(out_path), cv2.cvtColor(processed, cv2.COLOR_RGB2BGR))
+    id_codes = split_df["id_code"].astype(str).tolist()
+    total = len(id_codes)
+    workers = max_workers if max_workers is not None else min(8, max(2, os.cpu_count() or 4))
+    if total > 0:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = [
+                pool.submit(_cache_single_image, code, raw_dir, target_dir, mode, size)
+                for code in id_codes
+            ]
+            for done, future in enumerate(as_completed(futures), start=1):
+                future.result()
+                if progress_every > 0 and (done % progress_every == 0 or done == total):
+                    print(f"[Cache {mode}_{size}] {done}/{total} citra siap...", flush=True)
 
     return target_dir
 
@@ -417,6 +443,11 @@ def run_training_experiment(
                 "lr": float(optimizer.param_groups[0]["lr"]),
                 "epoch_sec": elapsed,
             }
+        )
+        print(
+            f"[{config.experiment_id}] epoch={epoch}/{config.epochs} "
+            f"train_loss={train_loss:.4f} val_loss={val_loss:.4f} val_qwk={val_qwk:.4f} ({elapsed:.1f}s)",
+            flush=True,
         )
 
         if val_qwk > best_qwk:

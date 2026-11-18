@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -202,6 +204,31 @@ def _resolve_image_path(images_dir: Path, id_code: str) -> Path | None:
     return None
 
 
+def _audit_single_row(
+    images_dir: Path,
+    id_code: str,
+    diagnosis: int,
+) -> tuple[bool, dict[str, Any]]:
+    img_path = _resolve_image_path(images_dir, id_code)
+    if img_path is None:
+        return False, {"id_code": id_code, "diagnosis": diagnosis, "reason": "missing_file"}
+
+    bgr = cv2.imread(str(img_path), cv2.IMREAD_COLOR)
+    if bgr is None or bgr.size == 0:
+        return False, {"id_code": id_code, "diagnosis": diagnosis, "reason": "unreadable_image"}
+
+    gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+    h, w = gray.shape
+    return True, {
+        "id_code": id_code,
+        "diagnosis": diagnosis,
+        "width": int(w),
+        "height": int(h),
+        "phash": str(compute_phash_64(gray)),
+        "dhash": str(compute_dhash_64(gray)),
+    }
+
+
 def audit_aptos_directory(
     data_dir: Path,
     output_csv: Path | None = None,
@@ -211,6 +238,8 @@ def audit_aptos_directory(
     phash_threshold: int = 6,
     dhash_threshold: int = 6,
     seed: int = 42,
+    max_workers: int | None = None,
+    progress_every: int = 400,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     """Audit integritas berkas APTOS 2019, klaster duplikat, serta split berstrata."""
     data_dir = Path(data_dir)
@@ -220,34 +249,32 @@ def audit_aptos_directory(
         raise FileNotFoundError(f"Berkas label tidak ditemukan: {csv_path}")
 
     labels_df = pd.read_csv(csv_path)
+    rows = [(str(row.id_code), int(row.diagnosis)) for row in labels_df.itertuples(index=False)]
+    total = len(rows)
+    workers = max_workers if max_workers is not None else min(8, max(2, os.cpu_count() or 4))
+
+    ordered_results: list[tuple[bool, dict[str, Any]] | None] = [None] * total
+    if total > 0:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            future_to_idx = {
+                pool.submit(_audit_single_row, images_dir, id_code, diagnosis): idx
+                for idx, (id_code, diagnosis) in enumerate(rows)
+            }
+            for done, future in enumerate(as_completed(future_to_idx), start=1):
+                ordered_results[future_to_idx[future]] = future.result()
+                if progress_every > 0 and (done % progress_every == 0 or done == total):
+                    print(f"[Audit] {done}/{total} citra diproses...", flush=True)
+
     records: list[dict[str, Any]] = []
     invalid_records: list[dict[str, Any]] = []
-
-    for row in labels_df.itertuples(index=False):
-        id_code = str(row.id_code)
-        diagnosis = int(row.diagnosis)
-        img_path = _resolve_image_path(images_dir, id_code)
-        if img_path is None:
-            invalid_records.append({"id_code": id_code, "diagnosis": diagnosis, "reason": "missing_file"})
+    for item in ordered_results:
+        if item is None:
             continue
-
-        bgr = cv2.imread(str(img_path), cv2.IMREAD_COLOR)
-        if bgr is None or bgr.size == 0:
-            invalid_records.append({"id_code": id_code, "diagnosis": diagnosis, "reason": "unreadable_image"})
-            continue
-
-        gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
-        h, w = gray.shape
-        records.append(
-            {
-                "id_code": id_code,
-                "diagnosis": diagnosis,
-                "width": int(w),
-                "height": int(h),
-                "phash": str(compute_phash_64(gray)),
-                "dhash": str(compute_dhash_64(gray)),
-            }
-        )
+        ok, payload = item
+        if ok:
+            records.append(payload)
+        else:
+            invalid_records.append(payload)
 
     valid_df = pd.DataFrame(records)
     clustered_df = cluster_near_duplicates(
